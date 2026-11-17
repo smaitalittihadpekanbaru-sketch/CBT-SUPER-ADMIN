@@ -3199,9 +3199,12 @@ function opsiBahas(q, buka) {
   const daftar = ['A', 'B', 'C', 'D', 'E'].filter(k => String(q['opsi_' + k.toLowerCase()] || '').trim());
   const butir = (huruf, isi, benar) => `<div class="b-opsi ${buka && benar ? 'benar' : ''}"><b>${huruf}.</b><span>${isi}</span>${buka && benar ? '<em>✓ kunci</em>' : ''}</div>`;
   switch (q.tipe_soal) {
-    case 'PG_TUNGGAL': case 'SAB': case 'PG_KOMPLEKS':
+    case 'PG_TUNGGAL': case 'SAB': case 'PG_KOMPLEKS': {
+      // opsi ikut tampil bila punya teks ATAU gambar (jawaban berupa gambar: teks boleh kosong)
+      const daftarPG = ['A', 'B', 'C', 'D', 'E'].filter(k => { const kk = k.toLowerCase(); return String(q['opsi_' + kk] || '').trim() || String(q['opsi_' + kk + '_img'] || '').trim(); });
       return (q.tipe_soal === 'PG_KOMPLEKS' ? '<p class="b-petunjuk">Pilih semua jawaban yang benar.</p>' : '') +
-        daftar.map(k => butir(k, renderTeks(q['opsi_' + k.toLowerCase()]), kunci.indexOf(k) >= 0)).join('');
+        daftarPG.map(k => { const kk = k.toLowerCase(); const gbr = String(q['opsi_' + kk + '_img'] || '').trim(); return butir(k, (gbr ? htmlMedia(gbr) : '') + renderTeks(q['opsi_' + kk] || ''), kunci.indexOf(k) >= 0); }).join('');
+    }
     case 'PG_1234': {
       const arti = ['(1), (2), dan (3) benar', '(1) dan (3) benar', '(2) dan (4) benar', 'hanya (4) benar', 'semua benar'];
       return '<ol class="b-1234">' + ['a', 'b', 'c', 'd'].map(k => '<li>' + teksR(q['opsi_' + k] || '') + '</li>').join('') + '</ol>' +
@@ -7593,4 +7596,4 @@ window.bukaTryout = async function () {
 <script>window.__berkasUtuh = true;</script>
 </body>
 </html>
-<!-- AKHIR BERKAS Guru · 815692 -->
+<!-- AKHIR BERKAS Guru · 816110 -->
