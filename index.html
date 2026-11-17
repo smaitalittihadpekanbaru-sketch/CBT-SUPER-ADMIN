@@ -493,6 +493,8 @@ sup.rm-sup,sub.rm-sub{font-size:.72em;line-height:0}
           </div>
           <div style="grid-column:span 2"><label title="Seberapa ketat pelanggaran dihitung. Semua tingkat bebas salah deteksi untuk iPad/tablet berkeyboard">Sensitivitas deteksi kecurangan</label>
             <select id="jSens"><option>Rendah</option><option selected>Sedang</option><option>Tinggi</option><option>Sangat tinggi</option><option>Maksimal</option></select><span class="sens-ket" id="jSensKet"></span></div>
+          <div><label title="Tingkat transparansi tulisan watermark di layar siswa">Transparansi watermark</label>
+            <select id="jTandaAir"><option value="Samar" selected>Samar (paling transparan)</option><option value="Sedang">Sedang</option><option value="Jelas">Jelas</option><option value="Mati">Mati (tanpa watermark)</option></select></div>
           <div style="grid-column:1/-1"><label>Kelas peserta <span class="ket">(tidak ada yang dicentang = semua siswa boleh mengerjakan)</span></label><div id="jKelas" class="pilih-kelas"></div></div>
           <div style="grid-column:1/-1" id="jPengampuWadah" class="sembunyi"><label>Guru pengampu <span class="ket">(konfirmasi: ujian masuk ke akun guru ini — soal, pemantauan, buka kunci, penilaian, unduhan; maks. 6. Hijau = mapel cocok)</span></label>
             <input type="text" id="jPengampuCari" placeholder="Cari nama guru atau mapel…"><div id="jPengampu" class="pilih-guru"></div></div>
@@ -1264,7 +1266,7 @@ $('btnSimpanUjian').onclick = () => tombolProses($('btnSimpanUjian'), 'Menyimpan
       portal: $('jPortal').value, acak_soal: $('jAcakSoal').value, acak_opsi: $('jAcakOpsi').value, pembahasan: $('jPemb').value, wajib_seb: $('jSeb').value, skema_nilai: $('jSkema').value,
       kelas_peserta: bacaPilihKelas($('jKelas')), kkm: $('jKkm').value, tampil_nilai: $('jTampil').value,
       kirim_awal: $('jKirimAwal').value, batas_pelanggaran: $('jBatasViol').value, subtes: $('jSubtesAktif').checked ? bacaSubtes() : [],
-      sensitivitas: $('jSens').value, guru_pengampu: USER.role === 'Admin' ? bacaPengampu() : undefined, porsi_pg: $('jPorsi').value, bahasa_sert: $('jBahasaSert').value, hasil_siswa: $('jHasilSiswa').value };
+      sensitivitas: $('jSens').value, tanda_air: $('jTandaAir').value, guru_pengampu: USER.role === 'Admin' ? bacaPengampu() : undefined, porsi_pg: $('jPorsi').value, bahasa_sert: $('jBahasaSert').value, hasil_siswa: $('jHasilSiswa').value };
     const pk = !$('jId').value && window.BANK_JADWAL;          // jadwal baru dari Bank Paket Soal: soal paket disalin otomatis
     const d = pk ? await api('cbtBankPaket', { op: 'pakai', paket_id: pk.paket_id, ujian: uj }) : await api('cbtUjian', { op: 'simpan', ujian: uj });
     if (pk && window.BANK) BANK.data = null;
@@ -5185,7 +5187,7 @@ const SENS_KET = {
   'Sedang': 'Disarankan. Dihitung: keluar tab/aplikasi, jendela lain ≥ 1,5 detik, layar terbagi, keluar layar penuh, menempel dari luar, tangkapan layar. Pintasan keyboard hanya diblokir. Aman untuk iPad/tablet berkeyboard (layar mati, rotasi, notifikasi tidak dihitung).',
   'Tinggi': 'Seperti Sedang dengan ambang lebih singkat, ditambah pintasan keyboard (Ctrl/Cmd) dan alat pengembang ikut dihitung.',
   'Sangat tinggi': 'Ambang tersingkat (ujian akhir/UTBK). Tetap TANPA salah deteksi: layar mati sendiri, keyboard iPad/tablet, dikte, notifikasi, memutar layar.',
-  'Maksimal': 'Kunci total (kiosk). WAJIB mode layar-utama sebelum ujian bisa dimulai: laptop/komputer HARUS Safe Exam Browser (tanpa SEB, tombol Mulai terkunci); HP/tablet HARUS mengunci perangkat (Android: Penyematan Aplikasi; iPad/iPhone: Akses Terpandu) dan membuka ujian dari ikon Layar Utama \u2014 siswa mencentang konfirmasi dulu baru bisa mulai. Selama ujian, SEMUA dihitung pelanggaran + tirai hitam "KECURANGAN": pop-up/jendela baru, Notes/Keep/aplikasi lain, Split View, keluar fokus/layar penuh, menempel, screenshot terdeteksi. Pengaman anti-salah-deteksi tetap aktif (layar mati sendiri, keyboard layar, dikte, notifikasi, memutar layar, muat ulang TIDAK dihitung). Catatan jujur: halaman web tetap tidak bisa mencegah screenshot/rekam layar tingkat sistem atau menghapus panel bawaan iOS \u2014 hanya SEB / App Pinning / Akses Terpandu (yang kini diwajibkan di level ini) yang benar-benar memblokirnya.'
+  'Maksimal': 'Kunci total \u2014 BERJALAN TANPA Safe Exam Browser. Ujian dikunci di layar penuh dan SEMUA dihitung pelanggaran + tirai hitam "KECURANGAN": pop-up/jendela baru, Notes/Keep/aplikasi lain, Split View, keluar fokus/layar penuh, menempel dari luar, screenshot terdeteksi. HP/tablet diminta mengunci perangkat (Android: Penyematan Aplikasi; iPad: Akses Terpandu) dan membuka dari Layar Utama sebagai penguat. Pengaman anti-salah-deteksi tetap aktif (layar mati sendiri, keyboard layar, dikte, notifikasi, memutar layar, muat ulang TIDAK dihitung). SEB TIDAK wajib di level ini \u2014 bila ingin mewajibkannya, pakai opsi terpisah "Wajib Safe Exam Browser = Ya". Catatan jujur: halaman web tidak bisa mencegah screenshot/rekam layar tingkat sistem atau menghapus panel bawaan iOS; untuk kunci sistem sepenuhnya gunakan SEB / App Pinning / Akses Terpandu (opsional).'
 };
 
 /* =========================== JADWAL UJIAN PER HARI =========================== */
@@ -5325,6 +5327,7 @@ function aturFormJadwal531(x) {
   $('jPengampuWadah').classList.toggle('sembunyi', !admin);
   if (admin) { $('jPengampuCari').value = ''; gambarPilihPengampu(x ? (x.guru_pengampu || []).slice() : []); }
   $('jSens').value = x && x.sensitivitas ? x.sensitivitas : 'Sedang'; $('jSensKet').textContent = SENS_KET[$('jSens').value];
+  $('jTandaAir').value = x && x.tanda_air ? x.tanda_air : 'Samar';
 }
 
 /* ---------- sesi paralel jurusan (kelas XII: 2–3 mapel bersamaan, satu token) ---------- */
@@ -6751,6 +6754,7 @@ async function jadwalDariPaket(id, sudah) {
   atur('jPemb', m.pembahasan); atur('jSeb', m.wajib_seb); atur('jKkm', m.kkm); atur('jTampil', m.tampil_nilai); atur('jKirimAwal', m.kirim_awal); atur('jBatasViol', m.batas_pelanggaran);
   atur('jBahasaSert', m.bahasa_sert); atur('jHasilSiswa', m.hasil_siswa);
   if (m.sensitivitas) { atur('jSens', m.sensitivitas); try { $('jSensKet').textContent = SENS_KET[$('jSens').value] || ''; } catch (e) { } }
+  if (m.tanda_air) atur('jTandaAir', m.tanda_air);
   aturSubtes(m.subtes || []);
   window.BANK_JADWAL = { paket_id: id, nama: p.nama_paket, jumlah: d.soal.length };
   $('jPaketInfo').innerHTML = `<div class="bk-banner">📦 <b>Soal dari Bank Paket:</b> ${teks(p.nama_paket)} · <b>${d.soal.length} soal</b> ${rincianTipe(info.tipe)}<br>
@@ -7596,4 +7600,4 @@ window.bukaTryout = async function () {
 <script>window.__berkasUtuh = true;</script>
 </body>
 </html>
-<!-- AKHIR BERKAS Guru · 816110 -->
+<!-- AKHIR BERKAS Guru · 816575 -->
