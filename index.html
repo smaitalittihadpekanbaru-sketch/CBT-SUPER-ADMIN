@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- AWAL BERKAS Guru · CBT & Try Out SMAIT Al-Ittihad v5 · build v5-2026-11-04 · hapus semua isi lama, tempel SATU kali -->
+<!-- AWAL BERKAS Guru · CBT & Try Out SMAIT Al-Ittihad v5 · build v5-2026-11-17 · hapus semua isi lama, tempel SATU kali -->
 <html lang="id">
 <head>
 <meta charset="utf-8">
@@ -492,7 +492,7 @@ sup.rm-sup,sub.rm-sub{font-size:.72em;line-height:0}
             </div>
           </div>
           <div style="grid-column:span 2"><label title="Seberapa ketat pelanggaran dihitung. Semua tingkat bebas salah deteksi untuk iPad/tablet berkeyboard">Sensitivitas deteksi kecurangan</label>
-            <select id="jSens"><option>Rendah</option><option selected>Sedang</option><option>Tinggi</option><option>Sangat tinggi</option></select><span class="sens-ket" id="jSensKet"></span></div>
+            <select id="jSens"><option>Rendah</option><option selected>Sedang</option><option>Tinggi</option><option>Sangat tinggi</option><option>Maksimal</option></select><span class="sens-ket" id="jSensKet"></span></div>
           <div style="grid-column:1/-1"><label>Kelas peserta <span class="ket">(tidak ada yang dicentang = semua siswa boleh mengerjakan)</span></label><div id="jKelas" class="pilih-kelas"></div></div>
           <div style="grid-column:1/-1" id="jPengampuWadah" class="sembunyi"><label>Guru pengampu <span class="ket">(konfirmasi: ujian masuk ke akun guru ini — soal, pemantauan, buka kunci, penilaian, unduhan; maks. 6. Hijau = mapel cocok)</span></label>
             <input type="text" id="jPengampuCari" placeholder="Cari nama guru atau mapel…"><div id="jPengampu" class="pilih-guru"></div></div>
@@ -525,6 +525,9 @@ sup.rm-sup,sub.rm-sub{font-size:.72em;line-height:0}
           [TINGKAT]: Mudah/Sedang/Sulit (atau LOTS/MOTS/HOTS) untuk skema TKA.
           <b>Gambar:</b> tempel gambar langsung di berkas Word, di bawah [STIMULUS], [SOAL], atau [MEDIA]. Gambar ikut terunggah ke Google Drive
           sekolah dan terpasang otomatis pada soalnya; gambar pertama tiap soal menjadi media soal, gambar berikutnya tampil di tempatnya.
+          <b>Gambar kedua soal:</b> tulis <b>[MEDIA2]</b> lalu tempel gambar/tautan — tampil di bawah gambar utama.
+          <b>Jawaban berupa gambar:</b> tulis <b>[A-IMG]</b> … <b>[E-IMG]</b> lalu tempel gambar atau tautan untuk tiap pilihan (boleh digabung teks [A]…[E], atau kosongkan teksnya agar pilihan berupa gambar saja).
+          <b>Bahasa Arab:</b> teks Arab (RTL) didukung penuh pada soal, pilihan, dan pembahasan — tulis apa adanya.
           <b>Audio Listening:</b> setelah impor, tekan tombol <b>+ Media</b> pada soal di tabel lalu pilih berkas MP3/M4A (maks. 15 MB),
           atau tulis <b>[MEDIA]: tautan-audio</b>. Di dalam teks juga bisa ditulis baris <b>[GAMBAR: tautan]</b> atau <b>[AUDIO: tautan]</b>. Bagian [SECTION] yang kosong mengikuti soal sebelumnya.</p>
 <pre class="contoh">[SECTION]: Reading
@@ -544,6 +547,15 @@ sup.rm-sup,sub.rm-sub{font-size:.72em;line-height:0}
 [MEDIA]: https://example.com/audio1.mp3
 [SOAL]: The speaker says technology decreased productivity.
 [KUNCI]: False
+---
+[SECTION]: اللغة العربية
+[TIPE]: PG_TUNGGAL
+[SOAL]: أيُّ الكلمات التالية جمعُ تكسير؟
+[A-IMG]: https://example.com/opsi-a.png
+[B-IMG]: https://example.com/opsi-b.png
+[C-IMG]: https://example.com/opsi-c.png
+[D-IMG]: https://example.com/opsi-d.png
+[KUNCI]: C
 ---</pre>
 <pre class="contoh">[
   { "section_module": "Math", "tipe_soal": "ISIAN_SINGKAT", "teks_soal": "Jika f(x) = 2x + 5, berapakah f(3)?",
@@ -968,7 +980,7 @@ let BOOT = {};
 try { BOOT = JSON.parse(document.getElementById('dataAwal').textContent); } catch (e) { BOOT = {}; }
 if (!BOOT.url) BOOT.url = URL_GAS;
 const DI_GAS = !!(window.google && google.script && google.script.run);
-const BUILD_HALAMAN = 'v5-2026-11-04';      // diperbarui otomatis saat paket dibuat; harus sama dengan BUILD di Code.gs
+const BUILD_HALAMAN = 'v5-2026-11-17';      // diperbarui otomatis saat paket dibuat; harus sama dengan BUILD di Code.gs
 /** Halaman yang dipasang di hosting luar: beri peringatan bila versinya tidak sama dengan server (Code.gs). */
 if (!DI_GAS) setTimeout(function () {
   fetch((typeof BOOT !== 'undefined' && BOOT.url) || URL_GAS, { method: 'POST', body: JSON.stringify({ action: 'ping' }), headers: { 'Content-Type': 'text/plain;charset=utf-8' }, redirect: 'follow' })
@@ -1128,7 +1140,16 @@ async function muatUjian() {
     const u = new Date(t.getTime() + 3 * 3600e3);
     $('jSelesai').value = `${u.getFullYear()}-${z(u.getMonth() + 1)}-${z(u.getDate())}T${z(u.getHours())}:00`;
   }
-  $('tabelUjian').querySelector('tbody').innerHTML = UJIAN.map(x => `<tr>
+  isiTabelUjian();
+  isiPilihUjian();
+  $('jPengampuWadah').classList.toggle('sembunyi', USER.role !== 'Admin');
+  if (USER.role === 'Admin') gambarPilihPengampu();
+  if (!$('jSensKet').textContent) $('jSensKet').textContent = SENS_KET[$('jSens').value];
+  gambarJadwalHari(); gambarRoster(); gambarRingkasPantau(); aturTombolValidasi();
+}
+function ujianTampil() { return UJIAN.filter(x => (JADWAL_F.arsip ? x.arsip === 'Ya' : x.arsip !== 'Ya')); }
+function isiTabelUjian() {
+  $('tabelUjian').querySelector('tbody').innerHTML = ujianTampil().map(x => `<tr>
     <td><b>${teks(x.judul_test)}</b><br><span class="ket">${teks(x.kategori_test)} · ${teks(x.mapel)} · ${teks(x.exam_id)}</span></td>
     <td style="white-space:nowrap">${teks(x.mulai_tampil)}<br>${teks(x.selesai_tampil)}<br><span class="ket">${x.durasi_menit} menit</span></td>
     <td><span class="token">${teks(x.access_code)}</span></td>
@@ -1146,14 +1167,10 @@ async function muatUjian() {
       <button class="tombol netral kecil" data-pantau="${x.exam_id}">Pantau</button><br>
       <button class="tombol netral kecil" data-salin="${x.exam_id}" title="Gandakan beserta soal untuk kelas/jadwal lain">Salin</button>
       ${x.tampil_nilai === 'Setelah dirilis' ? `<button class="tombol ${x.dirilis === 'Ya' ? 'netral' : ''} kecil" data-rilis="${x.exam_id}" data-v="${x.dirilis === 'Ya' ? '0' : '1'}">${x.dirilis === 'Ya' ? 'Sembunyikan nilai' : 'Umumkan nilai'}</button>` : ''}
-      ${x.sesi.total && x.bisaJadwal ? `<button class="tombol netral kecil" data-arsip="${x.exam_id}" title="Pindahkan hasil ke spreadsheet arsip agar spreadsheet utama tetap ringan">Arsip</button>` : ''}
+      ${x.sesi.total && x.bisaJadwal ? `<button class="tombol netral kecil" data-arsip="${x.exam_id}" title="Pindahkan HASIL ke spreadsheet arsip agar spreadsheet utama tetap ringan">Arsip hasil</button>` : ''}
+      ${x.bisaJadwal ? `<button class="tombol netral kecil" data-arsipjadwal="${x.exam_id}" data-v="${x.arsip === 'Ya' ? '0' : '1'}" title="${x.arsip === 'Ya' ? 'Tampilkan lagi di daftar jadwal' : 'Sembunyikan dari daftar jadwal (data tetap tersimpan)'}">${x.arsip === 'Ya' ? '↩ Kembalikan' : '🗄 Arsipkan'}</button>` : ''}
       ${x.bisaJadwal ? `<button class="tombol bahaya kecil" data-hapus="${x.exam_id}">Hapus</button>` : ''}</td></tr>`).join('') ||
-    '<tr><td colspan="8" class="ket">Belum ada jadwal ujian.</td></tr>';
-  isiPilihUjian();
-  $('jPengampuWadah').classList.toggle('sembunyi', USER.role !== 'Admin');
-  if (USER.role === 'Admin') gambarPilihPengampu();
-  if (!$('jSensKet').textContent) $('jSensKet').textContent = SENS_KET[$('jSens').value];
-  gambarJadwalHari(); gambarRoster(); gambarRingkasPantau(); aturTombolValidasi();
+    (JADWAL_F.arsip ? '<tr><td colspan="8" class="ket">Tidak ada jadwal yang diarsipkan.</td></tr>' : '<tr><td colspan="8" class="ket">Belum ada jadwal ujian.</td></tr>');
 }
 function isiPilihUjian() {
   ['sUjian', 'pUjian'].forEach(id => {
@@ -1168,8 +1185,9 @@ $('tabelUjian').onclick = e => {
   if (b.dataset.konfirmasi) { b.disabled = true; api('cbtUjian', { op: 'konfirmasi', exam_id: b.dataset.konfirmasi }).then(d => { kabar(d.pesan); return muatUjian(); }).catch(er => { kabar(er.message); b.disabled = false; }); return; }
   if (b.dataset.soal) { $('sUjian').value = b.dataset.soal; pilihTab('soal'); }
   if (b.dataset.pantau) { $('pUjian').value = b.dataset.pantau; pilihTab('pantau'); }
-  const x = UJIAN.find(u => u.exam_id === (b.dataset.salin || b.dataset.kartu || b.dataset.rilis || b.dataset.hapus || b.dataset.arsip));
+  const x = UJIAN.find(u => u.exam_id === (b.dataset.salin || b.dataset.kartu || b.dataset.rilis || b.dataset.hapus || b.dataset.arsip || b.dataset.arsipjadwal));
   if (b.dataset.arsip) arsipUjian(x);
+  if (b.dataset.arsipjadwal) { arsipJadwal(b.dataset.arsipjadwal, b.dataset.v === '1'); return; }
   if (b.dataset.salin) salinUjian(x);
   if (b.dataset.kartu) kartuPeserta(x);
   if (b.dataset.rilis) rilisNilai(x, b.dataset.v === '1');
@@ -1299,8 +1317,10 @@ $('tabelSoal').addEventListener('click', e => {
 });
 $('btnBahas').onclick = () => bukaBahas(0);
 
-const PETA_TAG = { SECTION: 'section_module', TIPE: 'tipe_soal', STIMULUS: 'stimulus_text', MEDIA: 'media_url', SOAL: 'teks_soal',
-  A: 'opsi_a', B: 'opsi_b', C: 'opsi_c', D: 'opsi_d', E: 'opsi_e', KUNCI: 'kunci_jawaban', BOBOT: 'bobot_nilai', PEMBAHASAN: 'pembahasan', TINGKAT: 'tingkat', EXAM_ID: null,
+const PETA_TAG = { SECTION: 'section_module', TIPE: 'tipe_soal', STIMULUS: 'stimulus_text', MEDIA: 'media_url', MEDIA2: 'media_url2', SOAL: 'teks_soal',
+  A: 'opsi_a', B: 'opsi_b', C: 'opsi_c', D: 'opsi_d', E: 'opsi_e',
+  A_IMG: 'opsi_a_img', B_IMG: 'opsi_b_img', C_IMG: 'opsi_c_img', D_IMG: 'opsi_d_img', E_IMG: 'opsi_e_img',
+  KUNCI: 'kunci_jawaban', BOBOT: 'bobot_nilai', PEMBAHASAN: 'pembahasan', TINGKAT: 'tingkat', EXAM_ID: null,
   PERSIAPAN: 'persiapan_detik', DURASI: 'durasi_detik', REKAM_ULANG: 'rekam_ulang' };
 function uraiTag(isi) {
   // Soal baru dimulai oleh baris "---" ATAU oleh tag [SECTION]/[TIPE]/[SOAL] setelah soal sebelumnya punya teks
@@ -1309,10 +1329,11 @@ function uraiTag(isi) {
   const tutup = () => { if (Object.keys(q).length) hasil.push(q); q = {}; akhir = null; };
   isi.replace(/\r/g, '').split('\n').forEach(function (baris) {
     if (/^\s*[-–—_*]{3,}\s*$/.test(baris)) { tutup(); return; }
-    const m = baris.match(/^\s*\[([A-Z_]+)\]\s*:?\s*(.*)$/);
-    if (m && m[1] in PETA_TAG) {
-      if (q.teks_soal && ['SECTION', 'TIPE', 'SOAL', 'STIMULUS'].indexOf(m[1]) >= 0) tutup();
-      akhir = PETA_TAG[m[1]];
+    const m = baris.match(/^\s*\[([A-Z0-9_-]+)\]\s*:?\s*(.*)$/);
+    const tag = m ? m[1].replace(/-/g, '_') : '';
+    if (m && tag in PETA_TAG) {
+      if (q.teks_soal && ['SECTION', 'TIPE', 'SOAL', 'STIMULUS'].indexOf(tag) >= 0) tutup();
+      akhir = PETA_TAG[tag];
       if (akhir) q[akhir] = m[2].trim();
     } else if (akhir && baris.trim()) q[akhir] = (q[akhir] ? q[akhir] + '\n' : '') + baris.trim();
   });
@@ -1637,9 +1658,9 @@ $('btnGantiPw').onclick = () => tombolProses($('btnGantiPw'), 'Menyimpan…', as
 /* ------------------------------ AWAL ------------------------------ */
 (async function () {
   if (BOOT.namaLembaga) $('lencana').textContent = 'CBT ADMIN & GURU · ' + BOOT.namaLembaga;
-  if (BOOT.url) $('tautanPortal').href = BOOT.url;
+  if ($('tautanPortal')) $('tautanPortal').href = urlPortalSiswa() || BOOT.url || '#';
   gambarLinkPortal();
-  if ((BOOT.urlCadangan || []).length) $('linkCadangan').innerHTML = '<b>Bagi peserta per kelompok kelas</b> (lebih dari 300 peserta serentak):<br>Portal 1 (utama): ' + teks(BOOT.url) +
+  if ((BOOT.urlCadangan || []).length) $('linkCadangan').innerHTML = '<b>Bagi peserta per kelompok kelas</b> (lebih dari 300 peserta serentak):<br>Portal 1 (utama): ' + teks(urlPortalSiswa() || BOOT.url) +
     BOOT.urlCadangan.map((u, i) => `<br>Portal ${i + 2} (cadangan): <a href="${teks(u)}" target="_blank" rel="noopener" style="word-break:break-all">${teks(u)}</a>`).join('');
   $('btnSalinLink').onclick = () => {
     const ok = () => kabar('Link portal siswa tersalin.');
@@ -3026,20 +3047,41 @@ if (document.readyState === 'loading') document.addEventListener('DOMContentLoad
 async function bukaMediaSoal(qid) {
   const q = SOAL.find(x => x.question_id === qid); if (!q) return;
   const no = SOAL.indexOf(q) + 1;
+  const pgOpsi = ['PG_TUNGGAL', 'SAB', 'PG_KOMPLEKS'].indexOf(q.tipe_soal) >= 0;
+  const slotGambar = (id, judul, nilai, ket) => `
+    <div class="mm-slot" style="border:1px solid rgba(128,128,128,.35);border-radius:8px;padding:8px;margin:6px 0">
+      <b>${judul}</b>${ket ? ` <span class="ket">${ket}</span>` : ''}
+      <div style="margin:4px 0">${nilai ? htmlMedia(nilai) : '<span class="ket">— kosong —</span>'}</div>
+      <label>Unggah gambar dari perangkat (maks. 15 MB)</label>
+      <input type="file" id="${id}Berkas" accept="image/*">
+      <label>atau tempel tautan https</label>
+      <input type="text" id="${id}Tautan" placeholder="https://…" value="${teks(nilai || '')}" data-awal="${teks(nilai || '')}">
+    </div>`;
+  const htmlOpsi = pgOpsi ? ['a', 'b', 'c', 'd', 'e'].map(k => {
+    const t = String(q['opsi_' + k] || '').trim();
+    return slotGambar('mmO' + k, 'Gambar pilihan ' + k.toUpperCase(), q['opsi_' + k + '_img'], t ? teks(t.slice(0, 60)) : 'teks kosong — pilihan berupa gambar saja');
+  }).join('') : '';
   const ok = await tanya('Media soal ' + no + (q.section_module ? ' · ' + q.section_module : ''), `
     <p class="ket" style="margin:0 0 8px">${teks(String(q.teks_soal).slice(0, 140))}${String(q.teks_soal).length > 140 ? '…' : ''}</p>
-    <div id="mmPratinjau">${q.media_url ? htmlMedia(q.media_url) : '<p class="ket">Belum ada media pada soal ini.</p>'}</div>
-    <label>Unggah gambar atau audio dari perangkat (maks. 15 MB)</label>
-    <input type="file" id="mmBerkas" accept="image/*,audio/*,.mp3,.m4a,.wav,.ogg">
-    <label>atau tempel tautan https (gambar/audio dari Google Drive atau situs lain)</label>
-    <input type="text" id="mmTautan" placeholder="https://…" value="${teks(q.media_url || '')}">
-    <label style="display:flex;gap:8px;align-items:center;font-weight:500"><input type="checkbox" id="mmAudio" style="width:auto" ${q.media_url && jenisMedia(q.media_url) === 'audio' ? 'checked' : ''}> Tautan ini berupa audio (untuk tautan tanpa akhiran .mp3)</label>
-    ${q.media_url ? `<label style="display:flex;gap:8px;align-items:center;font-weight:500"><input type="checkbox" id="mmPertahankan" style="width:auto" checked>
-      Pertahankan media lama bila jenisnya berbeda (mis. gambar peta + audio Listening) — dipindah ke awal teks bacaan</label>` : ''}
-    <p class="ket" style="margin-top:10px">Kosongkan tautan lalu Simpan untuk menghapus media dari soal.</p>
+    <div class="mm-slot" style="border:1px solid rgba(128,128,128,.35);border-radius:8px;padding:8px;margin:6px 0">
+      <b>Gambar / audio soal (utama)</b>
+      <div id="mmPratinjau" style="margin:4px 0">${q.media_url ? htmlMedia(q.media_url) : '<span class="ket">— kosong —</span>'}</div>
+      <label>Unggah gambar atau audio dari perangkat (maks. 15 MB)</label>
+      <input type="file" id="mmBerkas" accept="image/*,audio/*,.mp3,.m4a,.wav,.ogg">
+      <label>atau tempel tautan https (gambar/audio dari Google Drive atau situs lain)</label>
+      <input type="text" id="mmTautan" placeholder="https://…" value="${teks(q.media_url || '')}">
+      <label style="display:flex;gap:8px;align-items:center;font-weight:500"><input type="checkbox" id="mmAudio" style="width:auto" ${q.media_url && jenisMedia(q.media_url) === 'audio' ? 'checked' : ''}> Tautan ini berupa audio (untuk tautan tanpa akhiran .mp3)</label>
+      ${q.media_url ? `<label style="display:flex;gap:8px;align-items:center;font-weight:500"><input type="checkbox" id="mmPertahankan" style="width:auto" checked>
+        Pertahankan media lama bila jenisnya berbeda (mis. gambar peta + audio Listening) — dipindah ke awal teks bacaan</label>` : ''}
+    </div>
+    ${slotGambar('mm2', 'Gambar soal kedua', q.media_url2, 'tampil di bawah gambar utama')}
+    ${pgOpsi ? '<h4 style="margin:12px 0 2px">Gambar untuk pilihan jawaban</h4><p class="ket" style="margin:0 0 4px">Opsional — untuk soal yang jawabannya berupa gambar. Boleh digabung dengan teks pilihan, atau kosongkan teks pilihan agar jawaban berupa gambar saja.</p>' + htmlOpsi : ''}
+    <p class="ket" style="margin-top:10px">Kosongkan tautan sebuah slot lalu Simpan untuk menghapus gambarnya. Mendukung soal berbahasa Arab dan teks apa pun.</p>
     <div class="pesan" id="mmPesan"></div>`, 'Simpan');
   if (!ok) return;
   try {
+    kabar('Menyimpan media soal ' + no + '…');
+    // slot utama (logika audio + pertahankan media lama)
     const berkas = document.getElementById('mmBerkas').files[0];
     let url = document.getElementById('mmTautan').value.trim();
     if (berkas) { kabar('Mengunggah ' + berkas.name + '…'); url = await unggahMedia(berkas, $('sUjian').value); }
@@ -3047,8 +3089,19 @@ async function bukaMediaSoal(qid) {
     const pertahankan = document.getElementById('mmPertahankan');
     const sisip = q.media_url && url && pertahankan && pertahankan.checked && jenisMedia(url) !== jenisMedia(q.media_url)
       ? '[' + (jenisMedia(q.media_url) === 'audio' ? 'AUDIO' : 'GAMBAR') + ': ' + q.media_url.replace(/#(audio|gambar)$/, '') + ']' : '';
-    const d = await api('cbtMedia', { op: 'pasang', exam_id: $('sUjian').value, question_id: qid, media_url: url, sisip_stimulus: sisip });
-    kabar(d.pesan); await muatSoal();
+    if (url !== String(q.media_url || '') || sisip) await api('cbtMedia', { op: 'pasang', exam_id: $('sUjian').value, question_id: qid, media_url: url, slot: 'media_url', sisip_stimulus: sisip });
+    // slot gambar tambahan: soal kedua + gambar pilihan A–E (hanya yang berubah)
+    const slot2 = [['mm2', 'media_url2']];
+    if (pgOpsi) ['a', 'b', 'c', 'd', 'e'].forEach(k => slot2.push(['mmO' + k, 'opsi_' + k + '_img']));
+    for (const par of slot2) {
+      const id = par[0], kolom = par[1];
+      const f = document.getElementById(id + 'Berkas').files[0];
+      const inp = document.getElementById(id + 'Tautan');
+      let v = inp.value.trim();
+      if (f) { kabar('Mengunggah ' + f.name + '…'); v = await unggahMedia(f, $('sUjian').value); }
+      if (v !== String(inp.getAttribute('data-awal') || '')) await api('cbtMedia', { op: 'pasang', exam_id: $('sUjian').value, question_id: qid, media_url: v, slot: kolom });
+    }
+    kabar('Media soal ' + no + ' tersimpan.'); await muatSoal();
   } catch (e) { kabar(e.message); }
 }
 
@@ -3090,18 +3143,20 @@ async function bacaDocxDenganGambar(berkas) {
 /** Token [[GAMBAR_DOCX:n]]: gambar pertama tiap soal → media soal; gambar berikutnya → baris [GAMBAR: tautan] di tempatnya. */
 /** Impor JSON: gambar tertanam "data:image/…;base64,…" (di media_url, atau baris "[GAMBAR: data:image/…]" di teks) diubah menjadi
  *  token [[GAMBAR_DOCX:n]] lalu diunggah ke Google Drive seperti gambar dari Word. Gambar di dalam teks tetap di tempatnya. */
+const KOLOM_URL_GAMBAR = ['media_url', 'media_url2', 'opsi_a_img', 'opsi_b_img', 'opsi_c_img', 'opsi_d_img', 'opsi_e_img'];
 function gambarDariJson(soal) {
-  const gambar = [], KOLOM = ['media_url', 'stimulus_text', 'teks_soal', 'opsi_a', 'opsi_b', 'opsi_c', 'opsi_d', 'opsi_e', 'pembahasan'];
+  const gambar = [], KOLOM = KOLOM_URL_GAMBAR.concat(['stimulus_text', 'teks_soal', 'opsi_a', 'opsi_b', 'opsi_c', 'opsi_d', 'opsi_e', 'pembahasan']);
   const simpan = (mime, b64) => { gambar.push({ mime: mime.toLowerCase(), data: b64.replace(/\s+/g, '') }); return '[[GAMBAR_DOCX:' + (gambar.length - 1) + ']]'; };
   soal.forEach(q => KOLOM.forEach(k => {
     if (typeof q[k] !== 'string' || q[k].indexOf('data:image/') < 0) return;
-    if (k === 'media_url') { const m = q[k].trim().match(/^data:(image\/[a-z0-9.+-]+);base64,([A-Za-z0-9+/=\s]+)$/i); if (m) q[k] = simpan(m[1], m[2]); return; }
+    if (KOLOM_URL_GAMBAR.indexOf(k) >= 0) { const m = q[k].trim().match(/^data:(image\/[a-z0-9.+-]+);base64,([A-Za-z0-9+/=\s]+)$/i); if (m) q[k] = simpan(m[1], m[2]); return; }
     q[k] = q[k].replace(/\[GAMBAR\s*:\s*data:(image\/[a-z0-9.+-]+);base64,([A-Za-z0-9+/=\s]+?)\s*\]/gi, (x, mime, b64) => '\n' + simpan(mime, b64) + '\n');
   }));
   return gambar;
 }
 async function pasangGambarDocx(soal, gambar, examId, lapor, diTempat) {
-  const POLA = /\[\[GAMBAR_DOCX:(\d+)\]\]/g, KOLOM = ['media_url', 'stimulus_text', 'teks_soal', 'opsi_a', 'opsi_b', 'opsi_c', 'opsi_d', 'opsi_e', 'pembahasan'];
+  const POLA = /\[\[GAMBAR_DOCX:(\d+)\]\]/g,
+    KOLOM = KOLOM_URL_GAMBAR.concat(['stimulus_text', 'teks_soal', 'opsi_a', 'opsi_b', 'opsi_c', 'opsi_d', 'opsi_e', 'pembahasan']);
   const perlu = {}; soal.forEach(q => KOLOM.forEach(k => String(q[k] || '').replace(POLA, (m, n) => { perlu[n] = 1; return m; })));
   const ids = Object.keys(perlu), url = {};
   for (let i = 0; i < ids.length; i++) {
@@ -3115,7 +3170,10 @@ async function pasangGambarDocx(soal, gambar, examId, lapor, diTempat) {
     if (mm) utama = mm[1];
     else if (!diTempat && !String(q.media_url || '').trim()) for (const k of ['stimulus_text', 'teks_soal']) { const m2 = String(q[k] || '').match(/\[\[GAMBAR_DOCX:(\d+)\]\]/); if (m2) { utama = m2[1]; q[k] = String(q[k]).replace(m2[0], ''); break; } }
     if (utama !== null) q.media_url = url[utama];
-    KOLOM.forEach(k => { if (k !== 'media_url' && q[k]) q[k] = String(q[k]).replace(POLA, (m, n) => '[GAMBAR: ' + url[n] + ']').replace(/\n{3,}/g, '\n\n').trim(); });
+    // field URL gambar (gambar kedua + gambar pilihan A–E): token → URL murni
+    KOLOM_URL_GAMBAR.forEach(k => { if (k !== 'media_url' && q[k]) { const m = String(q[k]).match(/\[\[GAMBAR_DOCX:(\d+)\]\]/); if (m) q[k] = url[m[1]]; } });
+    // field teks: token → baris [GAMBAR: url] di tempatnya
+    KOLOM.forEach(k => { if (KOLOM_URL_GAMBAR.indexOf(k) < 0 && q[k]) q[k] = String(q[k]).replace(POLA, (m, n) => '[GAMBAR: ' + url[n] + ']').replace(/\n{3,}/g, '\n\n').trim(); });
   });
   return ids.length;
 }
@@ -3411,7 +3469,7 @@ async function kartuPeserta(x) {
     const kartu = s => `<div class="kartu-peserta"><div class="kp-atas"><img src="${LOGO_YKPI}" alt=""><span>${teks(BOOT.namaLembaga || '')}</span></div><b class="kp-judul">${teks(x.judul_test)}</b>
       <div class="kp-isi"><span>Nama</span><b>${teks(s.nama)}</b><span>NISN</span><b>${teks(s.nisn)}</b><span>Kelas</span><b>${teks(s.kelas)}</b>
       <span>Jadwal</span><b>${teks(x.mulai_tampil)}</b><span>Token</span><b class="kp-token">${teks(x.access_code)}</b>${s.pin ? `<span>PIN</span><b class="kp-token">${teks(s.pin)}</b>` : ''}</div>
-      <div class="kp-link">Buka: ${teks(BOOT.url || '')}</div></div>`;
+      <div class="kp-link">Buka: ${teks((typeof urlPortalSiswa === 'function' ? urlPortalSiswa() : '') || BOOT.url || '')}</div></div>`;
     const hal = [];
     for (let i = 0; i < daftar.length; i += 10) hal.push(`<div class="grid-kartu">${daftar.slice(i, i + 10).map(kartu).join('')}</div>`);
     cetakRapor(hal, 'Kartu peserta ' + x.judul_test);
@@ -3431,18 +3489,18 @@ function htmlEditorSoal(q) {
     <div><label>Bagian / section</label><input type="text" id="esBagian" value="${v('section_module')}" placeholder="Reading, Listening, Writing Task 1, …"></div>
     <div><label>Bobot</label><input type="number" id="esBobot" min="0" step="0.5" value="${v('bobot_nilai') || 1}"></div>
     <div><label>Tingkat (TKA)</label><select id="esTingkat">${['', 'Mudah', 'Sedang', 'Sulit'].map(t => `<option ${q.tingkat === t ? 'selected' : ''}>${t}</option>`).join('')}</select></div></div>
-    <label>Bacaan / stimulus (opsional; tabel: baris diawali |, gambar: baris [GAMBAR: tautan])</label><textarea id="esStimulus" rows="4">${v('stimulus_text')}</textarea>
-    <label>Teks soal</label><textarea id="esSoal" rows="3">${v('teks_soal')}</textarea>
+    <label>Bacaan / stimulus (opsional; tabel: baris diawali |, gambar: baris [GAMBAR: tautan])</label><textarea id="esStimulus" rows="4" dir="auto">${v('stimulus_text')}</textarea>
+    <label>Teks soal</label><textarea id="esSoal" rows="3" dir="auto">${v('teks_soal')}</textarea>
     <div id="esGrupOpsi"><label id="esLabelOpsi">Pilihan jawaban (kosongkan yang tidak dipakai)</label>
-      ${['a', 'b', 'c', 'd', 'e'].map(k => `<div class="baris-opsi"><b>${k.toUpperCase()}</b><input type="text" id="esOpsi${k}" value="${v('opsi_' + k)}"></div>`).join('')}</div>
+      ${['a', 'b', 'c', 'd', 'e'].map(k => `<div class="baris-opsi"><b>${k.toUpperCase()}</b><input type="text" id="esOpsi${k}" dir="auto" value="${v('opsi_' + k)}"></div>`).join('')}</div>
     <div id="esGrupKunci"><label>Kunci jawaban <span class="ket" id="esPetunjukKunci"></span></label><input type="text" id="esKunci" value="${v('kunci_jawaban')}"></div>
     <div id="esGrupSpeaking" class="grid-form"><div><label>Waktu persiapan (detik)</label><input type="number" id="esPersiapan" min="0" max="300" value="${v('persiapan_detik') || 0}"></div>
       <div><label>Durasi rekaman maks. (detik)</label><input type="number" id="esDurasi" min="10" max="600" value="${v('durasi_detik') || 120}"></div>
       <div><label>Boleh rekam ulang</label><select id="esUlang"><option ${q.rekam_ulang !== 'Ya' ? 'selected' : ''}>Tidak</option><option ${q.rekam_ulang === 'Ya' ? 'selected' : ''}>Ya</option></select></div>
       <div style="grid-column:1/-1"><label>Tautan tes Speaking di website lain (opsional)</label><input type="text" id="esLuar" value="${v('_luar')}" placeholder="https://… (kosongkan bila siswa merekam langsung di CBT)">
         <p class="ket" style="margin:4px 0 0">Bila diisi: siswa mengerjakan Speaking di website tersebut, lalu mengisi nilai yang diperoleh dan mengunggah screenshot hasilnya. Waktu persiapan/durasi di atas tidak dipakai. Meninggalkan halaman ujian saat soal ini terbuka tidak dihitung pelanggaran.</p></div></div>
-    <label>Gambar/audio soal (tautan https; atau atur lewat tombol Media setelah disimpan)</label><input type="text" id="esMedia" value="${v('media_url')}">
-    <label>Pembahasan / rubrik penilaian</label><textarea id="esPembahasan" rows="3">${v('pembahasan')}</textarea>`;
+    <label>Gambar/audio soal (tautan https; gambar kedua & gambar tiap pilihan A–E diatur lewat tombol Media setelah soal disimpan)</label><input type="text" id="esMedia" dir="auto" value="${v('media_url')}">
+    <label>Pembahasan / rubrik penilaian</label><textarea id="esPembahasan" rows="3" dir="auto">${v('pembahasan')}</textarea>`;
 }
 function aturEditorSoal() {
   const t = $('esTipe').value;
@@ -5123,11 +5181,12 @@ const SENS_KET = {
   'Rendah': 'Dihitung: keluar aplikasi lama (≥ 5 detik tablet / 2 detik laptop), menempel dari luar, tangkapan layar. Jendela lain hanya dicatat. Cocok untuk ulangan harian.',
   'Sedang': 'Disarankan. Dihitung: keluar tab/aplikasi, jendela lain ≥ 1,5 detik, layar terbagi, keluar layar penuh, menempel dari luar, tangkapan layar. Pintasan keyboard hanya diblokir. Aman untuk iPad/tablet berkeyboard (layar mati, rotasi, notifikasi tidak dihitung).',
   'Tinggi': 'Seperti Sedang dengan ambang lebih singkat, ditambah pintasan keyboard (Ctrl/Cmd) dan alat pengembang ikut dihitung.',
-  'Sangat tinggi': 'Ambang tersingkat (ujian akhir/UTBK). Tetap TANPA salah deteksi: layar mati sendiri, keyboard iPad/tablet, dikte, notifikasi, memutar layar.'
+  'Sangat tinggi': 'Ambang tersingkat (ujian akhir/UTBK). Tetap TANPA salah deteksi: layar mati sendiri, keyboard iPad/tablet, dikte, notifikasi, memutar layar.',
+  'Maksimal': 'Kunci total (kiosk). WAJIB mode layar-utama sebelum ujian bisa dimulai: laptop/komputer HARUS Safe Exam Browser (tanpa SEB, tombol Mulai terkunci); HP/tablet HARUS mengunci perangkat (Android: Penyematan Aplikasi; iPad/iPhone: Akses Terpandu) dan membuka ujian dari ikon Layar Utama \u2014 siswa mencentang konfirmasi dulu baru bisa mulai. Selama ujian, SEMUA dihitung pelanggaran + tirai hitam "KECURANGAN": pop-up/jendela baru, Notes/Keep/aplikasi lain, Split View, keluar fokus/layar penuh, menempel, screenshot terdeteksi. Pengaman anti-salah-deteksi tetap aktif (layar mati sendiri, keyboard layar, dikte, notifikasi, memutar layar, muat ulang TIDAK dihitung). Catatan jujur: halaman web tetap tidak bisa mencegah screenshot/rekam layar tingkat sistem atau menghapus panel bawaan iOS \u2014 hanya SEB / App Pinning / Akses Terpandu (yang kini diwajibkan di level ini) yang benar-benar memblokirnya.'
 };
 
 /* =========================== JADWAL UJIAN PER HARI =========================== */
-const JADWAL_F = { rentang: 'depan', kategori: '', kelas: '', guru: '' };
+const JADWAL_F = { rentang: 'depan', kategori: '', kelas: '', guru: '', arsip: false };
 function statusJadwal(x, kini) {
   if (x.status !== 'Aktif') return ['Nonaktif', ''];
   if (kini < x.waktu_mulai) return ['Akan datang', 'biru'];
@@ -5141,10 +5200,12 @@ function htmlPengampu(x) {
 function gambarJadwalHari() {
   const el = $('kartuJadwal'); if (!el || !USER) return;
   const kini = Date.now(), admin = USER.role === 'Admin', awalHari = new Date(); awalHari.setHours(0, 0, 0, 0);
-  let d = UJIAN.slice();
-  if (JADWAL_F.rentang === 'hari') d = d.filter(x => kunciHari(x.waktu_mulai) === kunciHari(kini) || (x.waktu_mulai <= kini && x.waktu_selesai >= kini));
-  else if (JADWAL_F.rentang === 'depan') d = d.filter(x => x.waktu_selesai >= awalHari.getTime());
-  else if (JADWAL_F.rentang === 'lewat') d = d.filter(x => x.waktu_selesai < kini);
+  let d = (typeof ujianTampil === 'function' ? ujianTampil() : UJIAN.slice());
+  if (!JADWAL_F.arsip) {
+    if (JADWAL_F.rentang === 'hari') d = d.filter(x => kunciHari(x.waktu_mulai) === kunciHari(kini) || (x.waktu_mulai <= kini && x.waktu_selesai >= kini));
+    else if (JADWAL_F.rentang === 'depan') d = d.filter(x => x.waktu_selesai >= awalHari.getTime());
+    else if (JADWAL_F.rentang === 'lewat') d = d.filter(x => x.waktu_selesai < kini);
+  }
   if (JADWAL_F.kategori) d = d.filter(x => x.kategori_test === JADWAL_F.kategori);
   if (JADWAL_F.kelas) d = d.filter(x => !x.kelas_peserta || !x.kelas_peserta.length || x.kelas_peserta.some(k => k.toLowerCase() === JADWAL_F.kelas.toLowerCase()));
   if (JADWAL_F.guru) d = d.filter(x => (x.guru_pengampu || []).indexOf(JADWAL_F.guru) >= 0);
@@ -5152,6 +5213,7 @@ function gambarJadwalHari() {
   d.sort((a, b) => turun ? b.waktu_mulai - a.waktu_mulai : a.waktu_mulai - b.waktu_mulai);
   JADWAL_TAMPIL = d;
   const perlu = UJIAN.filter(x => x.perluKonfirmasi);
+  const nArsip = UJIAN.filter(x => x.arsip === 'Ya').length;
   const hari = [], peta = {};
   d.forEach(x => { const k = kunciHari(x.waktu_mulai); if (!peta[k]) { peta[k] = { k: k, ms: x.waktu_mulai, sesi: [] }; hari.push(peta[k]); }
     const h = peta[k], kunciSesi = x.grup_sesi || ('T' + x.waktu_mulai + '|' + x.waktu_selesai);
@@ -5168,6 +5230,8 @@ function gambarJadwalHari() {
       <select id="jfKat">${opsiKat}</select><select id="jfKelas">${opsiKelas}</select>${admin ? `<select id="jfGuru">${opsiGuru}</select>` : ''}
       <span class="ket">${d.length} ujian · ${hari.length} hari</span><span style="flex:1"></span>
       <button class="tombol netral kecil" data-jdl="pdf">⬇ PDF jadwal</button><button class="tombol netral kecil" data-jdl="xlsx">⬇ Excel jadwal</button>
+      ${!JADWAL_F.arsip ? '<button class="tombol netral kecil" data-arsiplewat="1" title="Arsipkan semua jadwal yang waktunya sudah lewat sekaligus">🗄 Arsipkan yang sudah lewat</button>' : ''}
+      <label class="ket" style="display:flex;gap:5px;align-items:center;margin:0" title="Jadwal yang diarsipkan disembunyikan dari daftar; datanya tetap tersimpan"><input type="checkbox" id="jfArsip" style="width:auto;margin:0" ${JADWAL_F.arsip ? 'checked' : ''}> 🗄 Arsip${nArsip ? ' (' + nArsip + ')' : ''}</label>
       <label class="ket" style="display:flex;gap:5px;align-items:center;margin:0" title="Token hanya untuk pengawas — jangan dibagikan ke siswa"><input type="checkbox" id="jfToken" style="width:auto;margin:0"> sertakan token</label></div>
     ${hari.map(h => `<div class="jd-hari ${kunciHari(h.ms) === kunciHari(kini) ? 'kini' : ''}">${tglHari(h.ms)}${kunciHari(h.ms) === kunciHari(kini) ? ' <span class="tanda hijau">hari ini</span>' : ''}
         <span class="jd-n">${h.sesi.reduce((a, s) => a + s.daftar.length, 0)} ujian · ${h.sesi.length} sesi</span></div>
@@ -5177,23 +5241,62 @@ function gambarJadwalHari() {
           <div><span class="ket">Kelas</span><br><b style="font-size:13px">${x.kelas_peserta && x.kelas_peserta.length ? teks(x.kelas_peserta.join(', ')) : 'semua kelas'}</b><br><span class="ket">Token <span class="token">${teks(x.access_code)}</span></span></div>
           <div><span class="ket">Guru pengampu</span><br>${htmlPengampu(x)}<br><span class="ket">${x.sesi.selesai}/${x.sesi.total} selesai${x.sesi.berjalan ? ' · ' + x.sesi.berjalan + ' mengerjakan' : ''}${x.sesi.terkunci ? ' · <b style="color:var(--salah)">' + x.sesi.terkunci + ' terkunci</b>' : ''}${x.validasi ? ' · <span class="tanda hijau">nilai tervalidasi</span>' : ''}</span></div>
           <div class="aksi">${x.perluKonfirmasi ? `<button class="tombol kecil" data-konfirmasi="${x.exam_id}">✓ Konfirmasi</button>` : ''}
-            <button class="tombol netral kecil" data-jsoal="${x.exam_id}">Soal</button><button class="tombol netral kecil" data-jpantau="${x.exam_id}">Pantau</button></div></div>`).join('')}</div>`; }).join('')}`).join('') ||
-      '<p class="ket">Tidak ada jadwal pada pilihan ini.</p>'}`;
+            <button class="tombol netral kecil" data-jsoal="${x.exam_id}">Soal</button><button class="tombol netral kecil" data-jpantau="${x.exam_id}">Pantau</button>${x.bisaJadwal && statusJadwal(x, kini)[0] === 'Berlangsung' ? `<button class="tombol netral kecil" data-ubahwaktu="${x.exam_id}">⏱ Ubah waktu</button>` : ''}${x.bisaJadwal ? `<button class="tombol netral kecil" data-arsipjadwal="${x.exam_id}" data-v="${x.arsip === 'Ya' ? '0' : '1'}">${x.arsip === 'Ya' ? '↩ Kembalikan' : '🗄 Arsipkan'}</button>` : ''}</div></div>`).join('')}</div>`; }).join('')}`).join('') ||
+      (JADWAL_F.arsip ? '<p class="ket">Tidak ada jadwal yang diarsipkan.</p>' : '<p class="ket">Tidak ada jadwal pada pilihan ini.</p>')}`;
   ['jfRentang', 'jfKat', 'jfKelas', 'jfGuru'].forEach(id => { if ($(id)) $(id).onchange = () => { JADWAL_F.rentang = $('jfRentang').value; JADWAL_F.kategori = $('jfKat').value; JADWAL_F.kelas = $('jfKelas').value; JADWAL_F.guru = $('jfGuru') ? $('jfGuru').value : ''; gambarJadwalHari(); }; });
+  if ($('jfArsip')) $('jfArsip').onchange = () => { JADWAL_F.arsip = $('jfArsip').checked; gambarJadwalHari(); if (typeof isiTabelUjian === 'function') isiTabelUjian(); };
   if ($('btnSesiParalel')) $('btnSesiParalel').onclick = sesiParalel;
 }
 document.addEventListener('click', async function (e) {
-  const b = e.target.closest && e.target.closest('[data-konfirmasi],[data-jsoal],[data-jpantau]');
+  const b = e.target.closest && e.target.closest('[data-konfirmasi],[data-jsoal],[data-jpantau],[data-arsipjadwal],[data-arsiplewat],[data-ubahwaktu]');
   const di = id => $(id) && $(id).contains(b);
   if (!b || !(di('kartuJadwal') || di('pRingkas'))) return;
   if (b.dataset.jsoal) { $('sUjian').value = b.dataset.jsoal; pilihTab('soal'); return; }
   if (b.dataset.jpantau) { $('pUjian').value = b.dataset.jpantau; pilihTab('pantau'); return; }
+  if (b.dataset.arsipjadwal) { arsipJadwal(b.dataset.arsipjadwal, b.dataset.v === '1'); return; }
+  if (b.dataset.arsiplewat) { arsipLewat(); return; }
+  if (b.dataset.ubahwaktu) { dialogUbahWaktu(b.dataset.ubahwaktu); return; }
   if (b.dataset.konfirmasi) {
     try { b.disabled = true; const d = await api('cbtUjian', { op: 'konfirmasi', exam_id: b.dataset.konfirmasi }); kabar(d.pesan); await muatUjian(); }
     catch (er) { kabar(er.message); b.disabled = false; }
   }
 });
 
+async function dialogUbahWaktu(examId) {
+  const x = (UJIAN || []).find(u => u.exam_id === examId); if (!x) return;
+  const z = n => String(n).padStart(2, '0'), ws = new Date(x.waktu_selesai);
+  const isoWs = `${ws.getFullYear()}-${z(ws.getMonth() + 1)}-${z(ws.getDate())}T${z(ws.getHours())}:${z(ws.getMinutes())}`;
+  await dialog({ judul: '⏱ Ubah waktu ujian', tombol: 'Terapkan sekarang',
+    isi: `<p class="ket">Perubahan langsung berlaku ke <b>${x.sesi.berjalan || 0} siswa</b> yang sedang mengerjakan. Pilih salah satu cara:</p>
+      <div class="uw-wrap" style="display:grid;gap:12px">
+        <div><label><b>1. Tambah / kurangi menit</b> (untuk semua peserta berjalan)</label>
+          <div style="display:flex;gap:6px;flex-wrap:wrap;align-items:center;margin-top:4px">
+            ${[-10, -5, 5, 10, 15, 30].map(m => `<button type="button" class="tombol netral kecil uw-cepat" data-m="${m}">${m > 0 ? '+' : ''}${m} mnt</button>`).join('')}
+            <input type="number" id="uwTambah" placeholder="mis. 15 atau -5" style="width:130px"> <span class="ket">menit</span></div></div>
+        <div><label><b>2. Atur ulang durasi</b> (dihitung dari waktu mulai tiap siswa)</label>
+          <input type="number" id="uwDurasi" min="1" max="600" placeholder="mis. 90" style="width:130px"> <span class="ket">menit · sekarang ${x.durasi_menit} menit</span></div>
+        <div><label><b>3. Atur waktu selesai (jendela ujian)</b></label>
+          <input type="datetime-local" id="uwSelesai" value="${isoWs}"> <span class="ket">deadline siswa dibatasi oleh ini</span></div>
+        <p class="ket">Isi <b>satu</b> bagian saja. Bagian 1 paling sering dipakai untuk menambah waktu saat ada kendala.</p></div>`,
+    kerja: async () => {
+      const tambah = $('uwTambah').value.trim(), durasi = $('uwDurasi').value.trim(), selesai = $('uwSelesai').value;
+      const req = { op: 'ubahWaktu', exam_id: examId };
+      if (tambah !== '') req.tambah_menit = Number(tambah);
+      else if (durasi !== '') req.durasi_menit = Number(durasi);
+      else if (selesai && selesai !== isoWs) req.waktu_selesai = selesai;
+      else throw new Error('Isi salah satu: tambah menit, durasi, atau waktu selesai.');
+      const d = await api('cbtUjian', req); kabar(d.pesan); await muatUjian();
+    }, siap: () => { document.querySelectorAll('.uw-cepat').forEach(b => b.onclick = () => { $('uwTambah').value = b.dataset.m; $('uwDurasi').value = ''; }); } });
+}
+async function arsipJadwal(examId, arsip) {
+  try { const d = await api('cbtUjian', { op: 'arsipJadwal', exam_id: examId, arsip: !!arsip }); kabar(d.pesan); await muatUjian(); }
+  catch (e) { kabar(e.message); }
+}
+async function arsipLewat() {
+  await dialog({ judul: '\ud83d\uddc4 Arsipkan jadwal yang sudah lewat', tombol: 'Arsipkan',
+    isi: '<p>Semua jadwal yang waktunya <b>sudah lewat</b> akan disembunyikan dari daftar Jadwal Ujian dan roster. Datanya tetap tersimpan dan dapat ditampilkan lagi kapan saja lewat saringan <b>\ud83d\uddc4 Arsip</b>.</p>',
+    kerja: async () => { const d = await api('cbtUjian', { op: 'arsipLewat' }); kabar(d.pesan); await muatUjian(); } });
+}
 /* ---------- form jadwal: guru pengampu & sensitivitas ---------- */
 function gambarPilihPengampu(terpilih) {
   const w = $('jPengampu'); if (!w) return;
@@ -6793,7 +6896,7 @@ async function dialogPulihkan() {
   setTimeout(aturPorsiPg, 0);
 })();
 /* <</GURU-533>> */
-/* <<GURU-534>> — Computer Based Test for SMAIT Al-Ittihad (build v5-2026-11-04)
+/* <<GURU-534>> — Computer Based Test for SMAIT Al-Ittihad (build v5-2026-11-17)
    Menu samping (sidebar), bahasa sertifikat per ujian + pilihan bahasa saat mencetak (Indonesia/English/العربية),
    roster jadwal ujian (jam × kelas, per hari / sepekan), rekap detail per sesi ujian (hari + jam). */
 (function () {
@@ -6920,7 +7023,7 @@ function warnaMapel(m) {
   const hue = h % 360; return { w: `hsl(${hue} 55% 38%)`, b: `hsl(${hue} 70% 96%)` };
 }
 function dataRoster() {
-  const semua = (UJIAN || []).filter(x => !RO.kat || x.kategori_test === RO.kat);
+  const semua = (UJIAN || []).filter(x => x.arsip !== 'Ya' && (!RO.kat || x.kategori_test === RO.kat));
   const t0 = new Date(RO.tanggal + 'T00:00:00');
   let hari;
   if (RO.mode === 'pekan') {
@@ -7490,4 +7593,4 @@ window.bukaTryout = async function () {
 <script>window.__berkasUtuh = true;</script>
 </body>
 </html>
-<!-- AKHIR BERKAS Guru · 805149 -->
+<!-- AKHIR BERKAS Guru · 815692 -->
