@@ -13,19 +13,20 @@
 <title>CBT Admin &amp; Guru — SMAIT Al-Ittihad</title>
 <style>
 :root{--tinta:#14202E;--tinta-2:#43556B;--tinta-3:#6F8196;--kertas-2:#F4F6F9;--garis:#DCE3EC;
-  --hijau:#15803D;--hijau-muda:#DCFCE7;--hijau-tua:#14532D;--biru:#0F4C81;--salah:#B4302B;--ragu:#B7791F;--r:10px}
+  --hijau:#15803D;--hijau-muda:#DCFCE7;--hijau-tua:#14532D;--biru:#0F4C81;--salah:#B4302B;--ragu:#B7791F;--r:12px;
+  --bayang:0 1px 2px rgba(16,32,46,.04),0 2px 6px rgba(16,32,46,.06);--bayang-kuat:0 8px 28px rgba(16,32,46,.12)}
 *{box-sizing:border-box}
 body{margin:0;font-family:system-ui,-apple-system,'Segoe UI',sans-serif;color:var(--tinta);background:var(--kertas-2);font-size:14.5px;line-height:1.5}
 button,input,select,textarea{font-family:inherit;font-size:inherit}
 .sembunyi{display:none!important}
-.tombol{border:1px solid var(--hijau);background:var(--hijau);color:#fff;padding:9px 16px;border-radius:var(--r);font-weight:600;cursor:pointer}
+.tombol{border:1px solid var(--hijau);background:var(--hijau);color:#fff;padding:9px 16px;border-radius:var(--r);font-weight:600;cursor:pointer;box-shadow:0 1px 2px rgba(21,128,61,.18);transition:background .12s,box-shadow .12s}
 .tombol:hover{background:var(--hijau-tua)}
 .tombol:disabled{opacity:.5;cursor:not-allowed}
 .tombol.netral{background:#fff;color:var(--tinta-2);border-color:var(--garis)}
 .tombol.netral:hover{background:var(--kertas-2)}
 .tombol.bahaya{background:#fff;color:var(--salah);border-color:#E7BEBB}
 .tombol.kecil{padding:5px 10px;font-size:12.5px}
-.kartu{background:#fff;border:1px solid var(--garis);border-radius:var(--r)}
+.kartu{background:#fff;border:1px solid #E8EDF3;border-radius:var(--r);box-shadow:var(--bayang)}
 label{display:block;font-size:13px;font-weight:600;color:var(--tinta-2);margin:12px 0 5px}
 input[type=text],input[type=password],input[type=email],input[type=number],input[type=datetime-local],input[type=date],select,textarea{
   width:100%;padding:9px 11px;border:1px solid var(--garis);border-radius:var(--r);background:#fff;color:var(--tinta)}
@@ -45,13 +46,27 @@ input:focus,select:focus,textarea:focus{outline:none;border-color:var(--hijau);b
 .bar{background:var(--hijau-tua);color:#fff}
 .bar-isi{max-width:1320px;margin:0 auto;padding:12px 20px;display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap}
 .bar b{font-size:15px}.bar span{font-size:12.5px;color:#BBF7D0;display:block}
-.tabs{max-width:1320px;margin:0 auto;padding:14px 20px 0;display:flex;gap:6px;flex-wrap:wrap}
-.tabs button{border:1px solid var(--garis);background:#fff;border-radius:99px;padding:7px 14px;font-weight:600;color:var(--tinta-2);cursor:pointer}
-.tabs button.aktif{background:var(--hijau);border-color:var(--hijau);color:#fff}
-.tabs .lencana-angka{display:inline-block;background:var(--salah);color:#fff;border-radius:99px;font-size:11px;padding:1px 7px;margin-left:5px}
-.wadah{max-width:1320px;margin:0 auto;padding:16px 20px 60px}
-.blok{padding:18px 20px;margin-bottom:16px}
-.blok h3{margin:0 0 4px;font-size:16px}
+/* Tata letak baru: navigasi sidebar kiri (desktop) + konten kanan. Di layar sempit kembali ke pil horizontal. */
+.cangkang{max-width:1320px;margin:0 auto;display:flex;align-items:flex-start;gap:0}
+.tabs{flex:0 0 234px;display:flex;flex-direction:column;gap:3px;padding:16px 12px 40px;position:sticky;top:0;align-self:flex-start;max-height:100vh;overflow-y:auto}
+.tabs .nav-grup{font-size:11px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--tinta-3);padding:14px 12px 5px}
+.tabs .nav-grup:first-child{padding-top:2px}
+.tabs button{display:flex;align-items:center;gap:9px;text-align:left;width:100%;border:1px solid transparent;background:transparent;border-radius:10px;padding:9px 12px;font-weight:600;color:var(--tinta-2);cursor:pointer;font-size:14px;transition:background .12s,border-color .12s}
+.tabs button:hover{background:#fff;border-color:var(--garis)}
+.tabs button.aktif{background:var(--hijau);border-color:var(--hijau);color:#fff;box-shadow:0 2px 10px rgba(21,128,61,.24)}
+.tabs .lencana-angka{display:inline-block;background:var(--salah);color:#fff;border-radius:99px;font-size:11px;padding:1px 7px;margin-left:auto}
+.wadah{flex:1;min-width:0;max-width:none;margin:0;padding:18px 24px 60px}
+@media(max-width:900px){
+  .cangkang{display:block}
+  .tabs{flex:none;flex-direction:row;flex-wrap:wrap;gap:6px;position:static;max-height:none;overflow:visible;padding:12px 16px 0}
+  .tabs .nav-grup{display:none}
+  .tabs button{width:auto;border-radius:99px;border-color:var(--garis);background:#fff;padding:7px 13px}
+  .tabs button.aktif{background:var(--hijau);color:#fff}
+  .tabs .lencana-angka{margin-left:5px}
+  .wadah{padding:16px 16px 60px}
+}
+.blok{padding:20px 22px;margin-bottom:18px}
+.blok h3{margin:0 0 4px;font-size:16.5px;font-weight:700;letter-spacing:-.01em}
 .ket{color:var(--tinta-3);font-size:13px;margin:0 0 10px}
 .grid-dua{display:grid;grid-template-columns:1fr 1fr;gap:16px;align-items:start}.grid-dua>.kartu{margin-bottom:16px}
 @media(max-width:900px){.grid-dua{grid-template-columns:1fr}}
@@ -59,8 +74,9 @@ input:focus,select:focus,textarea:focus{outline:none;border-color:var(--hijau);b
 .aksi{display:flex;gap:8px;flex-wrap:wrap;margin-top:14px;align-items:center}
 .gulir{overflow-x:auto}
 table{width:100%;border-collapse:collapse;font-size:13.5px}
-th,td{padding:8px 9px;border-bottom:1px solid var(--garis);text-align:left;vertical-align:top}
-th{background:var(--kertas-2);font-size:12.5px;color:var(--tinta-2);white-space:nowrap}
+th,td{padding:9px 10px;border-bottom:1px solid var(--garis);text-align:left;vertical-align:top}
+th{background:#EEF2F6;font-size:11.5px;letter-spacing:.03em;text-transform:uppercase;color:var(--tinta-3);font-weight:700;white-space:nowrap}
+tbody tr:hover>td{background:#F7FAFC}
 .token{font-family:ui-monospace,Menlo,Consolas,monospace;font-weight:700;font-size:15px;letter-spacing:1px;background:var(--kertas-2);padding:2px 8px;border-radius:6px}
 .tanda{display:inline-block;font-size:11.5px;font-weight:700;padding:2px 8px;border-radius:6px;background:var(--kertas-2);color:var(--tinta-2);white-space:nowrap}
 .tanda.hijau{background:#E6F4EE;color:#1B7A55}.tanda.merah{background:#FDECEA;color:var(--salah)}.tanda.kuning{background:#FCF3DF;color:#8A6110}.tanda.biru{background:#E7EEF7;color:var(--biru)}
@@ -68,7 +84,7 @@ tr.langgar td{background:#FFF5F5}
 .titik{display:inline-block;width:9px;height:9px;border-radius:50%;background:#CBD5E1;margin-right:5px}
 .titik.on{background:#16A34A;box-shadow:0 0 0 3px #DCFCE7}
 .angka{display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:10px;margin:0 0 14px}
-.angka .kartu{padding:12px 14px}.angka b{display:block;font-size:22px}.angka span{font-size:12px;color:var(--tinta-3)}
+.angka .kartu{padding:14px 16px;border-left:3px solid var(--hijau)}.angka b{display:block;font-size:24px;font-weight:800;color:var(--hijau-tua);letter-spacing:-.02em}.angka span{font-size:12px;color:var(--tinta-3)}
 .log{font-size:12px;color:var(--tinta-2);max-width:260px}
 .log summary{cursor:pointer;color:var(--biru)}
 .peringatan{background:#FFF7E6;border:1px solid #F6D58E;color:#7A4B00;padding:10px 14px;border-radius:var(--r);margin:14px 20px 0;max-width:1280px}
@@ -417,19 +433,24 @@ sup.rm-sup,sub.rm-sub{font-size:.72em;line-height:0}
     </div>
   </div></div>
   <div class="peringatan sembunyi" id="pwBawaan">Anda masih memakai password awal. Demi keamanan, ganti password Anda di tab <b>Akun</b>.</div>
-  <div class="tabs" id="tabs">
-    <button class="aktif" data-t="ujian">Jadwal Ujian</button>
-    <button data-t="soal">Soal</button>
+  <div class="cangkang">
+  <nav class="tabs" id="tabs">
+    <div class="nav-grup">Manajemen Ujian</div>
+    <button class="aktif" data-t="ujian">🗓️ Jadwal Ujian</button>
+    <button data-t="soal">📝 Soal</button>
     <button data-t="bank" id="tabBank">📦 Bank Paket Soal</button>
-    <button data-t="siswa">Siswa</button>
-    <button data-t="pantau">Pemantauan</button>
-    <button data-t="monitor" id="tabMonitor">🛰 Monitor Ujian</button>
-    <button data-t="guru" class="sembunyi" id="tabGuru">Guru<span class="lencana-angka sembunyi" id="angkaTunggu">0</span></button>
-    <button data-t="rekap">Rekap Nilai</button>
-    <button data-t="wali" class="sembunyi" id="tabWali">Wali Kelas</button>
-    <button data-t="tryout" class="sembunyi" id="tabTryout">Try Out UTBK</button>
-    <button data-t="akun">Akun</button>
-  </div>
+    <button data-t="siswa">👥 Siswa</button>
+    <div class="nav-grup">Pengawasan &amp; Monitoring</div>
+    <button data-t="pantau">📡 Pemantauan</button>
+    <button data-t="monitor" id="tabMonitor">🛰️ Monitor Ujian</button>
+    <div class="nav-grup">Hasil &amp; Rapor</div>
+    <button data-t="rekap">📊 Rekap Nilai</button>
+    <button data-t="wali" class="sembunyi" id="tabWali">🏫 Wali Kelas</button>
+    <button data-t="tryout" class="sembunyi" id="tabTryout">🎯 Try Out UTBK</button>
+    <div class="nav-grup">Sistem</div>
+    <button data-t="guru" class="sembunyi" id="tabGuru">🧑‍🏫 Guru<span class="lencana-angka sembunyi" id="angkaTunggu">0</span></button>
+    <button data-t="akun">⚙️ Akun</button>
+  </nav>
   <div class="wadah">
 
     <!-- ---- UJIAN & TOKEN ---- -->
@@ -616,6 +637,7 @@ sup.rm-sup,sub.rm-sub{font-size:.72em;line-height:0}
         <div class="aksi" style="margin:6px 0 10px">
           <select id="siFilter" style="width:auto"></select>
           <input type="text" id="siCari" placeholder="Cari nama, NISN, atau kelas…" style="max-width:280px">
+          <button class="tombol netral kecil" id="btnImporRuang" title="Impor penempatan ruang tes + siswa dari Excel/JSON; terhubung otomatis ke Pemantauan">⬆ Impor Ruang &amp; Siswa</button>
           <span style="flex:1"></span>
           <span class="ket">Pindahkan yang dicentang ke</span><select id="siPindahKe" style="width:auto"></select><button class="tombol netral kecil" id="btnPindahKelas">Pindahkan</button>
         </div>
@@ -627,7 +649,7 @@ sup.rm-sup,sub.rm-sub{font-size:.72em;line-height:0}
           <button class="tombol netral kecil" id="btnPinSlip" title="Slip PIN rahasia per siswa untuk digunting dan dibagikan pribadi (kartu peserta tidak memuat PIN/token)">🖨 Slip PIN</button>
           <span class="ket">Berlaku untuk siswa yang dicentang; bila tidak ada yang dicentang, untuk kelas pada filter. Siswa ber-PIN wajib memasukkan PIN saat masuk ujian (mencegah login atas nama teman). Bagikan PIN secara pribadi; kartu peserta tidak memuat PIN maupun token.</span>
         </div>
-        <div class="gulir"><table id="tabelSiswa"><thead><tr><th><input type="checkbox" id="siSemua" style="width:auto"></th><th>NISN</th><th>Nama</th><th>Kelas</th><th>PIN</th><th>Status</th><th></th></tr></thead><tbody></tbody></table></div>
+        <div class="gulir"><table id="tabelSiswa"><thead><tr><th><input type="checkbox" id="siSemua" style="width:auto"></th><th>NISN</th><th>Nama</th><th>Kelas</th><th>Ruang tes</th><th>PIN</th><th>Status</th><th></th></tr></thead><tbody></tbody></table></div>
       </div>
     </div>
 
@@ -662,7 +684,7 @@ sup.rm-sup,sub.rm-sub{font-size:.72em;line-height:0}
       <div class="angka" id="pAngka"></div>
       <div class="kartu blok">
         <p class="ket">Siswa dengan pelanggaran disorot merah dan diurutkan paling atas. Buka kunci hanya setelah pengawas mengonfirmasi penyebabnya.</p>
-        <div class="gulir"><table id="tabelPantau"><thead><tr><th>#</th><th>Siswa</th><th>Kelas</th><th>Status</th><th>Dijawab</th><th>Tempel</th><th>Tab</th><th>Multi</th><th>Total</th><th title="Indeks risiko kecurangan 0–100">Risiko</th><th>Log</th><th>Nilai</th><th></th></tr></thead><tbody></tbody></table></div>
+        <div class="gulir"><table id="tabelPantau"><thead><tr><th>#</th><th>Siswa</th><th>Kelas</th><th>Ruang</th><th>Status</th><th>Dijawab</th><th>Tempel</th><th>Tab</th><th>Multi</th><th>Total</th><th title="Indeks risiko kecurangan 0–100">Risiko</th><th>Log</th><th>Nilai</th><th></th></tr></thead><tbody></tbody></table></div>
       </div>
     </div>
 
@@ -950,6 +972,7 @@ sup.rm-sup,sub.rm-sub{font-size:.72em;line-height:0}
         <div id="ubHasil" style="margin-top:10px"></div>
       </div>
     </div>
+  </div>
   </div>
 </section>
 
@@ -1456,7 +1479,7 @@ async function muatPantau(diam) {
   const mm = d2 => Math.floor(d2 / 60) + ':' + String(d2 % 60).padStart(2, '0');
   $('tabelPantau').querySelector('tbody').innerHTML = s.map((x, i) => `<tr class="${x.total > 0 ? 'langgar' : ''}" data-kelas="${teks(x.kelas)}">
     <td>${i + 1}</td><td><span class="titik ${x.online ? 'on' : ''}" title="${x.lewatSheet ? 'Lewat portal cadangan: status diperbarui ±2,5 menit sekali' : ''}"></span><b>${teks(x.nama)}</b><br><span class="ket">${teks(x.nisn)}${x.lewatSheet && x.status === 'In Progress' ? ' · portal cadangan' : ''}</span></td>
-    <td>${teks(x.kelas)}</td><td>${badge(x.status)}${x.status === 'In Progress' ? '<br><span class="ket">' + (x.subtes ? 'subtes ' + teks(x.subtes) + ' · ' : '') + 'sisa ' + mm(x.sisaDetik) + '</span>' : ''}</td>
+    <td>${teks(x.kelas)}</td><td>${x.ruang ? '<b>' + teks(x.ruang) + '</b>' + (x.meja ? ' <span class="ket">· ' + teks(x.meja) + '</span>' : '') : '<span class="ket">—</span>'}</td><td>${badge(x.status)}${x.status === 'In Progress' ? '<br><span class="ket">' + (x.subtes ? 'subtes ' + teks(x.subtes) + ' · ' : '') + 'sisa ' + mm(x.sisaDetik) + '</span>' : ''}</td>
     <td>${x.dijawab}/${d.jumlahSoal}</td><td>${x.cp}</td><td>${x.tab}</td><td>${x.mt}</td>
     <td><b style="color:${x.total ? 'var(--salah)' : 'inherit'}">${x.total}</b>${d.maks ? '/' + d.maks : ''}</td>
     <td>${x.risiko ? tandaRisiko(x.risiko) : '—'}</td>
@@ -1465,7 +1488,7 @@ async function muatPantau(diam) {
     <td style="white-space:nowrap">${x.status === 'Terminated' ? `<button class="tombol kecil" data-buka="${x.session_id}" data-nama="${teks(x.nama)}">Buka kunci</button>` : ''}
       ${d.adaEsai && x.status !== 'In Progress' ? `<button class="tombol netral kecil" data-esai="${x.session_id}">Nilai esai/speaking</button>` : ''}
       ${x.status !== 'In Progress' ? `<button class="tombol netral kecil" data-rapor="${x.session_id}">Rapor</button>` : ''}</td></tr>`).join('') ||
-    '<tr><td colspan="13" class="ket">Belum ada siswa yang masuk.</td></tr>';
+    '<tr><td colspan="14" class="ket">Belum ada siswa yang masuk.</td></tr>';
   isiKelasPantau(); saringPantau();
 }
 $('pUjian').onchange = () => { aturTombolValidasi(); muatPantau().catch(e => kabar(e.message)); };
@@ -1508,8 +1531,8 @@ $('btnHitungUlang').onclick = () => tombolProses($('btnHitungUlang'), 'Menghitun
 $('btnCsv').onclick = () => {
   if (!PANTAU) return;
   const k = v => '"' + String(v === null || v === undefined ? '' : v).replace(/"/g, '""') + '"';
-  const baris = [['NISN', 'Nama', 'Kelas', 'Status', 'Dijawab', 'Salin', 'Tab', 'Multi', 'Total pelanggaran', 'Skor objektif', 'Skor esai', 'Skor akhir', 'Persen (0-100)', 'Nilai (' + PANTAU.labelSkema + ')', 'Huruf']]
-    .concat(PANTAU.sesi.map(x => [x.nisn, x.nama, x.kelas, x.status, x.dijawab, x.cp, x.tab, x.mt, x.total, x.skor_objektif, x.skor_esai, x.skor_akhir, x.nilai_persen, x.nilai_skala, x.nilai_huruf]));
+  const baris = [['NISN', 'Nama', 'Kelas', 'Ruang', 'Meja', 'Status', 'Dijawab', 'Salin', 'Tab', 'Multi', 'Total pelanggaran', 'Skor objektif', 'Skor esai', 'Skor akhir', 'Persen (0-100)', 'Nilai (' + PANTAU.labelSkema + ')', 'Huruf']]
+    .concat(PANTAU.sesi.map(x => [x.nisn, x.nama, x.kelas, x.ruang || '', x.meja || '', x.status, x.dijawab, x.cp, x.tab, x.mt, x.total, x.skor_objektif, x.skor_esai, x.skor_akhir, x.nilai_persen, x.nilai_skala, x.nilai_huruf]));
   const blob = new Blob(['\ufeff' + baris.map(r => r.map(k).join(',')).join('\n')], { type: 'text/csv' });
   const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.target = '_blank';
   a.download = 'Rekap_' + PANTAU.ujian.judul_test.replace(/\W+/g, '_') + '.csv'; document.body.appendChild(a); a.click(); a.remove();
@@ -3373,10 +3396,11 @@ function gambarSiswa() {
   const rows = SISWA.filter(s => (!f || s.kelas === f) && (!c || (s.nisn + ' ' + s.nama + ' ' + s.kelas).toLowerCase().indexOf(c) >= 0));
   $('siJumlah').textContent = rows.length + ' siswa';
   $('tabelSiswa').querySelector('tbody').innerHTML = rows.slice(0, 600).map(s => `<tr><td><input type="checkbox" class="pilih-siswa" value="${teks(s.nisn)}"></td><td>${teks(s.nisn)}</td><td>${teks(s.nama)}</td><td>${teks(s.kelas)}</td>
+    <td>${s.ruang ? `<b>${teks(s.ruang)}</b>${s.nomor_meja ? ` <span class="ket">· ${teks(s.nomor_meja)}</span>` : ''}` : '<span class="ket">—</span>'}</td>
     <td>${s.pin ? `<code class="pin" title="PIN pribadi">${teks(s.pin)}</code>` : '<span class="ket">—</span>'}</td>
     <td><span class="tanda ${s.status === 'Aktif' ? 'hijau' : ''}">${s.status}</span></td>
     <td><button class="tombol netral kecil" data-nisn="${teks(s.nisn)}" data-st="${s.status === 'Aktif' ? 'Nonaktif' : 'Aktif'}">${s.status === 'Aktif' ? 'Nonaktifkan' : 'Aktifkan'}</button></td></tr>`).join('') +
-    (rows.length > 600 ? `<tr><td colspan="7" class="ket">${rows.length - 600} siswa lain; pilih kelas atau gunakan pencarian.</td></tr>` : '') || '<tr><td colspan="7" class="ket">Belum ada siswa.</td></tr>';
+    (rows.length > 600 ? `<tr><td colspan="8" class="ket">${rows.length - 600} siswa lain; pilih kelas atau gunakan pencarian.</td></tr>` : '') || '<tr><td colspan="8" class="ket">Belum ada siswa.</td></tr>';
   $('siSemua').checked = false;
 }
 $('siFilter').onchange = gambarSiswa;
@@ -3393,6 +3417,7 @@ async function aturPin(mode) {
   try { const d = await api('cbtSiswa', Object.assign({ op: 'pin', mode: mode }, t.nisn ? { nisn: t.nisn } : {}, t.kelas ? { kelas: t.kelas } : {})); kabar(d.pesan); await muatSiswa(); }
   catch (e) { kabar(e.message); }
 }
+if ($('btnImporRuang')) $('btnImporRuang').onclick = imporRuangUI;
 $('btnPinBuat').onclick = () => aturPin('buat');
 $('btnPinUlang').onclick = () => aturPin('ulang');
 $('btnPinHapus').onclick = () => aturPin('hapus');
@@ -5217,6 +5242,10 @@ function gambarJadwalHari() {
   const turun = JADWAL_F.rentang === 'lewat';
   d.sort((a, b) => turun ? b.waktu_mulai - a.waktu_mulai : a.waktu_mulai - b.waktu_mulai);
   JADWAL_TAMPIL = d;
+  const mBerlangsung = d.filter(x => statusJadwal(x, kini)[0] === 'Berlangsung').length;
+  const mKerja = d.reduce((a, x) => a + ((x.sesi && x.sesi.berjalan) || 0), 0);
+  const mSelesai = d.reduce((a, x) => a + ((x.sesi && x.sesi.selesai) || 0), 0);
+  const mKunci = d.reduce((a, x) => a + ((x.sesi && x.sesi.terkunci) || 0), 0);
   const perlu = UJIAN.filter(x => x.perluKonfirmasi);
   const nArsip = UJIAN.filter(x => x.arsip === 'Ya').length;
   const hari = [], peta = {};
@@ -5229,6 +5258,12 @@ function gambarJadwalHari() {
   el.innerHTML = `<div style="display:flex;justify-content:space-between;gap:10px;flex-wrap:wrap;align-items:center">
       <h3 style="margin:0">📅 ${admin ? 'Jadwal ujian (semua)' : 'Jadwal ujian saya'}</h3>
       ${admin ? '<button class="tombol kecil" id="btnSesiParalel" title="Mapel jurusan kelas XII (IPA/IPS/Bahasa) berjalan bersamaan dengan satu token">⧉ Buat sesi paralel jurusan</button>' : ''}</div>
+    <div class="angka" style="margin:12px 0 2px">
+      <div class="kartu"><b>${mBerlangsung}</b><span>Ujian berlangsung</span></div>
+      <div class="kartu"><b>${mKerja}</b><span>Sedang mengerjakan</span></div>
+      <div class="kartu"><b>${mSelesai}</b><span>Sudah selesai</span></div>
+      <div class="kartu" style="${mKunci ? 'border-left-color:var(--salah)' : ''}"><b style="${mKunci ? 'color:var(--salah)' : ''}">${mKunci}</b><span>Peserta terkunci</span></div>
+    </div>
     ${perlu.length ? `<div class="jd-banner">🔔 <b>${perlu.length} jadwal dari admin</b> menunggu konfirmasi Anda sebagai guru pengampu: ${perlu.map(x => '<b>' + teks(x.judul_test) + '</b>').join(', ')}. Tekan <b>✓ Konfirmasi</b> pada jadwalnya.</div>` : ''}
     <div class="jd-filter"><select id="jfRentang"><option value="hari" ${JADWAL_F.rentang === 'hari' ? 'selected' : ''}>Hari ini</option><option value="depan" ${JADWAL_F.rentang === 'depan' ? 'selected' : ''}>Hari ini & mendatang</option>
       <option value="lewat" ${JADWAL_F.rentang === 'lewat' ? 'selected' : ''}>Sudah lewat</option><option value="semua" ${JADWAL_F.rentang === 'semua' ? 'selected' : ''}>Semua</option></select>
@@ -5307,7 +5342,7 @@ async function arsipLewat() {
 /* ---------- impor jadwal massal dari Excel/JSON (kolom fleksibel, pratinjau per-baris) ---------- */
 function _tglSelImpor(v) { const p = n => ('0' + n).slice(-2); return v.getFullYear() + '-' + p(v.getMonth() + 1) + '-' + p(v.getDate()) + ' ' + p(v.getHours()) + ':' + p(v.getMinutes()); }
 function _barisDariSheetJadwal(aoa) {
-  const kunci = /judul|nama|mapel|pelajaran|kategori|jenis|tanggal|tgl|waktu|jam|durasi|menit|lama|kelas|rombel|token|kode/i;
+  const kunci = /judul|nama|mapel|pelajaran|kategori|jenis|tanggal|tgl|waktu|jam|durasi|menit|lama|kelas|rombel|token|kode|nisn|nis|ruang|lab|meja|kursi|bangku/i;
   const sel = v => (v instanceof Date) ? _tglSelImpor(v) : (v == null ? '' : v);
   let hi = -1;
   for (let i = 0; i < Math.min(aoa.length, 15); i++) {
@@ -5369,6 +5404,56 @@ function tampilPratinjauJadwal(daftar, pv) {
     kerja: r.siap ? (async () => {
       const d = await api('cbtUjian', { op: 'imporJadwal', pratinjau: false, daftar: daftar }, { coba: 2, batas: 300000 });
       kabar(d.pesan); await muatUjian(); return true;
+    }) : undefined
+  });
+}
+/* ---------- impor ruang tes + siswa dari Excel/JSON (terhubung ke Pemantauan) ---------- */
+async function imporRuangUI() {
+  const inp = document.createElement('input');
+  inp.type = 'file'; inp.accept = '.xlsx,.xls,.json,application/json';
+  inp.onchange = async () => {
+    const f = inp.files && inp.files[0]; if (!f) return;
+    try {
+      kabar('Membaca berkas…');
+      let daftar;
+      if (/\.json$/i.test(f.name)) {
+        const j = JSON.parse(await f.text());
+        daftar = Array.isArray(j) ? j : (j.penempatan || j.ruang || j.siswa || j.data || j.rows || j.baris || []);
+      } else {
+        await muatPustaka('xlsx', () => !!window.XLSX);
+        const wb = window.XLSX.read(new Uint8Array(await f.arrayBuffer()), { type: 'array', cellDates: true });
+        const sh = wb.Sheets[wb.SheetNames[0]];
+        const aoa = window.XLSX.utils.sheet_to_json(sh, { header: 1, raw: true, defval: '' });
+        daftar = _barisDariSheetJadwal(aoa);
+      }
+      if (!daftar || !daftar.length) { kabar('Tidak ada baris data. Pastikan ada kolom Ruang dan NISN.'); return; }
+      if (daftar.length > 2000) { kabar('Maksimal 2000 baris; berkas berisi ' + daftar.length + '.'); return; }
+      const pv = await api('cbtSiswa', { op: 'imporRuang', pratinjau: true, daftar: daftar }, { coba: 2 });
+      tampilPratinjauRuang(daftar, pv);
+    } catch (e) { kabar('Gagal membaca berkas: ' + (e && e.message || e)); }
+  };
+  inp.click();
+}
+function tampilPratinjauRuang(daftar, pv) {
+  const r = pv.ringkas || {};
+  const baris = (pv.baris || []).map(function (b) {
+    const galat = b.status === 'galat';
+    const st = galat ? ('✗ ' + teks(b.pesan || 'galat')) : (b.status === 'baru' ? '✓ baru' : '✓ diperbarui');
+    return '<tr style="' + (galat ? 'background:#FDECEC' : '') + '"><td style="text-align:center">' + b.baris + '</td><td style="white-space:nowrap">' + teks(String(b.nisn || '')) + '</td><td>' + teks(b.nama || '') +
+      '</td><td>' + teks(b.kelas || '') + '</td><td>' + teks(b.ruang || '') + '</td><td style="text-align:center">' + teks(b.meja || '') + '</td><td style="' + (galat ? 'color:var(--salah)' : 'color:var(--hijau)') + '"><b>' + st + '</b></td></tr>';
+  }).join('');
+  const rn = pv.ruangRingkas || {}; const ruangTxt = Object.keys(rn).sort().map(k => teks(k) + ' (' + rn[k] + ')').join(' · ');
+  const isi = '<p style="margin:0 0 6px">Dari <b>' + (r.total || 0) + '</b> baris: <b style="color:var(--hijau)">' + (r.baru || 0) + ' siswa baru</b> · <b>' + (r.diperbarui || 0) + ' penempatan diperbarui</b>' +
+    (r.galat ? ' · <b style="color:var(--salah)">' + r.galat + ' galat</b> (baris ✗ dilewati)' : '') + '. Total <b>' + (r.ruang || 0) + ' ruang tes</b>.</p>' +
+    (ruangTxt ? '<p class="ket" style="margin:-2px 0 8px">' + ruangTxt + '</p>' : '') +
+    '<div style="max-height:50vh;overflow:auto;border:1px solid var(--garis);border-radius:8px"><table class="tabel-data" style="width:100%;border-collapse:collapse;font-size:12.5px;min-width:680px"><thead><tr style="background:var(--hijau-tua);color:#fff">' +
+    '<th>#</th><th>NISN</th><th>Nama</th><th>Kelas</th><th>Ruang</th><th>Meja</th><th>Status</th></tr></thead><tbody>' + baris + '</tbody></table></div>';
+  dialog({
+    judul: '⬆ Impor Ruang & Siswa — Pratinjau', lebar: true, isi: isi,
+    tombol: (r.baru || r.diperbarui) ? ('Terapkan ke ' + (r.ruang || 0) + ' ruang') : false,
+    kerja: (r.baru || r.diperbarui) ? (async () => {
+      const d = await api('cbtSiswa', { op: 'imporRuang', pratinjau: false, daftar: daftar }, { coba: 2, batas: 300000 });
+      kabar(d.pesan); await muatSiswa(); return true;
     }) : undefined
   });
 }
@@ -5646,19 +5731,42 @@ function agregatGuru(d) {
       o.esai += u.esaiMenunggu; o.pel += u.pelanggaran; o.tinggi += u.risikoTinggi; o.soal += u.soal; }); });
   return Object.keys(p).map(k => { const o = p[k]; return Object.assign(o, { mapelTeks: Object.keys(o.mapel).join(', '), rata: o.n ? Math.round(o.jml / o.n * 100) / 100 : null }); }).sort((a, b) => a.guru.localeCompare(b.guru));
 }
+/** Panel ringkas rekap: kartu metrik (rata-rata, tertinggi, terendah, ketuntasan) + grafik sebaran nilai 5 interval. */
+function rekapRingkasHtml(d) {
+  const vals = (d.nilai || []).map(n => Number(n.nilai)).filter(v => isFinite(v));
+  if (!vals.length) return '';
+  const n = vals.length, rata = Math.round(vals.reduce((a, b) => a + b, 0) / n * 10) / 10, maks = Math.max.apply(null, vals), min = Math.min.apply(null, vals);
+  let tuntas = 0, berKkm = 0; (d.ujian || []).forEach(u => { if (u.tuntas !== null && u.tuntas !== undefined) { tuntas += u.tuntas; berKkm += u.selesai; } });
+  const pT = berKkm ? Math.round(tuntas / berKkm * 1000) / 10 : null;
+  const seb = [0, 0, 0, 0, 0]; vals.forEach(x => seb[x < 60 ? 0 : x < 70 ? 1 : x < 80 ? 2 : x < 90 ? 3 : 4]++);
+  const maxSeb = Math.max(1, Math.max.apply(null, seb)), warna = ['#B4302B', '#B7791F', '#2F855A', '#15803D', '#0F4C81'], label = ['&lt;60', '60–69', '70–79', '80–89', '90–100'];
+  const bars = seb.map((c, i) => `<div style="display:flex;flex-direction:column;align-items:center;gap:4px;flex:1">
+      <b style="font-size:13px">${c}</b>
+      <div style="width:100%;max-width:56px;height:92px;display:flex;align-items:flex-end"><div title="${label[i]}: ${c}" style="width:100%;height:${Math.round(c / maxSeb * 100)}%;min-height:3px;background:${warna[i]};border-radius:5px 5px 0 0"></div></div>
+      <span class="ket" style="font-size:11px">${label[i]}</span></div>`).join('');
+  return `<div class="angka" style="margin:0 0 10px">
+      <div class="kartu"><b>${rata}</b><span>Rata-rata nilai</span></div>
+      <div class="kartu"><b>${maks}</b><span>Nilai tertinggi</span></div>
+      <div class="kartu" style="border-left-color:var(--ragu)"><b style="color:var(--ragu)">${min}</b><span>Nilai terendah</span></div>
+      <div class="kartu"><b>${pT === null ? '—' : pT + '%'}</b><span>Ketuntasan KKM${berKkm ? ' (' + tuntas + '/' + berKkm + ')' : ''}</span></div>
+    </div>
+    <div class="kartu" style="padding:12px 16px;margin:0 0 12px"><div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px"><b style="font-size:13.5px">📊 Sebaran nilai akhir <span class="ket" style="font-weight:400">(${n} nilai, interval 10)</span></b></div>
+      <div style="display:flex;gap:8px;align-items:flex-end">${bars}</div></div>`;
+}
 function gambarRekapSemua() {
   const d = REKAP_SEMUA, el = $('rsHasil'); if (!d || !el) return;
   document.querySelectorAll('#rsPil button').forEach(b => b.classList.toggle('aktif', b.dataset.v === REKAP_TAMPIL));
   const v = x => x === null || x === undefined || x === '' ? '—' : x;
-  if (REKAP_TAMPIL === 'ujian') el.innerHTML = `<div class="gulir"><table><thead><tr><th>Ujian</th><th>Jadwal</th><th>Pengampu</th><th>Peserta</th><th>Rata-rata</th><th>Min–Maks</th><th>Tuntas</th><th>α</th><th>Soal sulit</th><th>Pelanggaran</th><th>Risiko tinggi</th><th>Validasi</th></tr></thead><tbody>
+  const ringkas = rekapRingkasHtml(d);
+  if (REKAP_TAMPIL === 'ujian') el.innerHTML = ringkas + `<div class="gulir"><table><thead><tr><th>Ujian</th><th>Jadwal</th><th>Pengampu</th><th>Peserta</th><th>Rata-rata</th><th>Min–Maks</th><th>Tuntas</th><th>α</th><th>Soal sulit</th><th>Pelanggaran</th><th>Risiko tinggi</th><th>Validasi</th></tr></thead><tbody>
     ${d.ujian.map(u => `<tr><td><b>${teks(u.mapel)}</b> — ${teks(u.judul)}<br><span class="ket">${teks(u.kategori)} · ${teks(u.kelas)}</span></td><td class="ket">${teks(u.jadwal)}</td><td>${teks(u.pengampu)}</td>
       <td>${u.selesai}/${u.peserta}${u.esaiMenunggu ? '<br><span class="tanda kuning">' + u.esaiMenunggu + ' esai belum dinilai</span>' : ''}</td><td><b>${v(u.rata)}</b></td><td>${v(u.min)}–${v(u.maks)}</td>
       <td>${u.tuntas === null ? '—' : u.tuntas + '/' + u.selesai + ' (KKM ' + u.kkm + ')'}</td><td>${u.analisis ? v(u.analisis.alfa) : '—'}</td><td>${u.analisis ? u.analisis.sulit : '—'}</td>
       <td>${u.pelanggaran}</td><td>${u.risikoTinggi ? '<b style="color:var(--salah)">' + u.risikoTinggi + '</b>' : 0}</td><td>${u.validasi ? '<span class="tanda hijau">✓</span>' : '<span class="ket">belum</span>'}</td></tr>`).join('') || '<tr><td colspan="12" class="ket">Tidak ada ujian.</td></tr>'}</tbody></table></div>`;
-  if (REKAP_TAMPIL === 'mapel') el.innerHTML = `<div class="gulir"><table><thead><tr><th>Mapel</th><th>Ujian</th><th>Guru</th><th>Siswa selesai</th><th>Rata-rata</th><th>% tuntas</th><th>Rata-rata α</th><th>Soal sulit</th><th>Pelanggaran</th><th>Risiko tinggi</th><th>Tervalidasi</th><th>Esai belum dinilai</th></tr></thead><tbody>
+  if (REKAP_TAMPIL === 'mapel') el.innerHTML = ringkas + `<div class="gulir"><table><thead><tr><th>Mapel</th><th>Ujian</th><th>Guru</th><th>Siswa selesai</th><th>Rata-rata</th><th>% tuntas</th><th>Rata-rata α</th><th>Soal sulit</th><th>Pelanggaran</th><th>Risiko tinggi</th><th>Tervalidasi</th><th>Esai belum dinilai</th></tr></thead><tbody>
     ${agregatMapel(d).map(o => `<tr><td><b>${teks(o.mapel)}</b></td><td>${o.ujian}</td><td>${teks(o.guruTeks)}</td><td>${o.selesai}</td><td><b>${v(o.rata)}</b></td><td>${o.persenTuntas === null ? '—' : o.persenTuntas + '%'}</td>
       <td>${v(o.alfaRata)}</td><td>${o.sulit}</td><td>${o.pel}</td><td>${o.tinggi}</td><td>${o.valid}/${o.ujian}</td><td>${o.esai}</td></tr>`).join('')}</tbody></table></div>`;
-  if (REKAP_TAMPIL === 'guru') el.innerHTML = `<div class="gulir"><table><thead><tr><th>Guru pengampu</th><th>Mapel</th><th>Ujian</th><th>Dikonfirmasi</th><th>Nilai tervalidasi</th><th>Soal disiapkan</th><th>Siswa selesai</th><th>Rata-rata</th><th>Esai belum dinilai</th><th>Pelanggaran</th><th>Risiko tinggi</th></tr></thead><tbody>
+  if (REKAP_TAMPIL === 'guru') el.innerHTML = ringkas + `<div class="gulir"><table><thead><tr><th>Guru pengampu</th><th>Mapel</th><th>Ujian</th><th>Dikonfirmasi</th><th>Nilai tervalidasi</th><th>Soal disiapkan</th><th>Siswa selesai</th><th>Rata-rata</th><th>Esai belum dinilai</th><th>Pelanggaran</th><th>Risiko tinggi</th></tr></thead><tbody>
     ${agregatGuru(d).map(o => `<tr><td><b>${teks(o.guru)}</b></td><td>${teks(o.mapelTeks)}</td><td>${o.ujian}</td><td>${o.konfirmasi}/${o.ujian}</td><td>${o.valid}/${o.ujian}</td><td>${o.soal}</td><td>${o.selesai}</td>
       <td><b>${v(o.rata)}</b></td><td>${o.esai ? '<span class="tanda kuning">' + o.esai + '</span>' : 0}</td><td>${o.pel}</td><td>${o.tinggi}</td></tr>`).join('')}</tbody></table></div>`;
 }
@@ -6299,7 +6407,7 @@ function bukaMonitor() {
         <select id="mnTanggal" class="sembunyi" title="Pilih hari ujian"></select>
         ${USER.role === 'Admin' ? '' : '<select id="mnLingkup"><option value="semua">Semua ujian (pengawas)</option><option value="saya">Hanya ujian saya</option></select>'}
         <label><input type="checkbox" id="mnOto" checked> Perbarui otomatis</label><label title="Bunyi saat ada pelanggaran baru / sesi terkunci"><input type="checkbox" id="mnSuara"> 🔔 Bunyi</label>
-        <button class="tombol netral kecil" id="mnMuat">↻ Muat</button><button class="tombol netral kecil" id="mnLayar">⛶ Layar penuh</button>
+        <button class="tombol netral kecil" id="mnMuat">↻ Muat</button><button class="tombol netral kecil" id="mnTV" title="Tampilan command center semua ruang tes dalam 1 layar — untuk TV/proyektor">📺 Mode TV (per ruang)</button><button class="tombol netral kecil" id="mnLayar">⛶ Layar penuh</button>
         <button class="tombol netral kecil" id="mnXlsx">⬇ Excel</button><button class="tombol netral kecil" id="mnPdf">⬇ PDF</button></div></div>
       <div class="mn-angka" id="mnAngka"></div><div class="mn-ujian" id="mnUjian"></div>
       <div class="mn-dua"><div class="mn-kotak kunci" id="mnKunci"></div><div class="mn-kotak"><h4>⚡ Kejadian terbaru <span class="ket" id="mnFeedN"></span></h4><div class="mn-feed" id="mnFeed"></div></div></div>
@@ -6321,6 +6429,7 @@ function bukaMonitor() {
     if ($('mnLingkup')) $('mnLingkup').onchange = () => { MON.lingkup = $('mnLingkup').value; MON.sebelum = null; muatMonitor(false, true); };
     $('mnSuara').checked = MON.suara; $('mnSuara').onchange = () => { MON.suara = $('mnSuara').checked; try { localStorage.setItem('mn_suara', MON.suara ? '1' : '0'); } catch (e) { } if (MON.suara) bunyiMonitor(false); };
     $('mnMuat').onclick = () => tombolProses($('mnMuat'), 'Memuat…', () => muatMonitor(false, true));
+    $('mnTV').onclick = bukaMonitorTV;
     $('mnLayar').onclick = () => { const t = $('tMonitor'); if (document.fullscreenElement) document.exitFullscreen(); else if (t.requestFullscreen) t.requestFullscreen().catch(() => { }); };
     $('mnXlsx').onclick = () => excelMonitor().catch(e => kabar(e.message));
     $('mnPdf').onclick = () => pdfMonitor();
@@ -6333,6 +6442,100 @@ function bukaMonitor() {
   muatMonitor(false, false);
   jadwalMonitor();
 }
+/* ===== Mode TV / Command Center: semua ruang tes dalam 1 layar (TV/proyektor) ===== */
+function _tvHMS(d) { d = Math.max(0, d | 0); const h = d / 3600 | 0, m = (d % 3600) / 60 | 0, s = d % 60; return (h ? h + ':' : '') + ('0' + m).slice(-2) + ':' + ('0' + s).slice(-2); }
+async function bukaMonitorTV() {
+  if (document.getElementById('tvWall')) return;
+  const w = document.createElement('div'); w.id = 'tvWall';
+  w.innerHTML = `<style>
+    #tvWall{position:fixed;inset:0;z-index:9000;background:#0A1512;color:#E8F2EC;font-family:system-ui,Segoe UI,sans-serif;display:flex;flex-direction:column}
+    #tvWall .tvbar{display:flex;align-items:center;gap:18px;padding:12px 20px;background:linear-gradient(90deg,#0E2A1E,#0A1512);border-bottom:1px solid #1C3B2E}
+    #tvWall .tvbar h2{margin:0;font-size:20px;font-weight:800;letter-spacing:.02em}
+    #tvWall .tvbar .jam{font-variant-numeric:tabular-nums;font-size:26px;font-weight:800;color:#86EFAC;margin-left:auto}
+    #tvWall .tvstat{display:flex;gap:16px;font-size:14px;font-weight:700}
+    #tvWall .tvstat b{display:block;font-size:22px}
+    #tvWall .tvstat .on{color:#86EFAC}#tvWall .tvstat .kunci{color:#FCA5A5}
+    #tvWall .tvtutup{background:#1C3B2E;border:1px solid #2F5E49;color:#E8F2EC;border-radius:8px;padding:8px 14px;font-weight:700;cursor:pointer}
+    #tvWall .tvgrid{flex:1;display:grid;gap:10px;padding:12px 16px;overflow:hidden;grid-auto-rows:1fr}
+    #tvWall .rk{background:#0F1F18;border:1px solid #21402F;border-radius:12px;padding:12px 14px;display:flex;flex-direction:column;gap:6px;min-height:0}
+    #tvWall .rk.kunci{border-color:#B4302B;box-shadow:0 0 0 2px rgba(180,48,43,.35)}
+    #tvWall .rk h3{margin:0;font-size:15px;font-weight:800;line-height:1.2;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+    #tvWall .rk .tmr{font-variant-numeric:tabular-nums;font-size:30px;font-weight:800;letter-spacing:.01em}
+    #tvWall .rk .tmr.hijau{color:#4ADE80}#tvWall .rk .tmr.kuning{color:#FACC15}#tvWall .rk .tmr.merah{color:#F87171}#tvWall .rk .tmr.abu{color:#6B8577;font-size:20px}
+    #tvWall .rk .baris{display:flex;gap:10px;flex-wrap:wrap;font-size:12.5px;color:#B9D3C6;margin-top:auto}
+    #tvWall .rk .baris b{color:#E8F2EC}
+    #tvWall .rk .pil{display:inline-flex;align-items:center;gap:4px;background:#13271D;border:1px solid #244A37;border-radius:99px;padding:2px 8px}
+    #tvWall .rk .pil.k{background:#2A1413;border-color:#5E2623;color:#FCA5A5}
+    #tvWall .rk .bar{height:6px;border-radius:99px;background:#1A3326;overflow:hidden}#tvWall .rk .bar>i{display:block;height:100%;background:#22C55E}
+    #tvWall .tvticker{padding:7px 18px;background:#0E2A1E;border-top:1px solid #1C3B2E;font-size:13px;color:#CDE7DA;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+    #tvWall .tvkosong{grid-column:1/-1;display:grid;place-items:center;color:#6B8577;font-size:16px}
+  </style>
+  <div class="tvbar"><h2>🛰 Command Center — Ruang Tes</h2>
+    <div class="tvstat"><div>Online <b class="on" id="tvOn">0</b></div><div>Ruang <b id="tvNR">0</b></div><div>Terkunci <b class="kunci" id="tvKn">0</b></div></div>
+    <span class="jam" id="tvJam">--:--:--</span>
+    <button class="tvtutup" id="tvClose">⤫ Keluar (Esc)</button></div>
+  <div class="tvgrid" id="tvGrid"></div>
+  <div class="tvticker" id="tvTick">Memuat data pemantauan…</div>`;
+  document.body.appendChild(w);
+  window._tvAktif = true;
+  document.getElementById('tvClose').onclick = tutupMonitorTV;
+  window._tvEsc = e => { if (e.key === 'Escape') tutupMonitorTV(); };
+  document.addEventListener('keydown', window._tvEsc);
+  try { if (w.requestFullscreen) await w.requestFullscreen(); } catch (e) { }
+  window._tvJeda = setInterval(tvDetik, 1000);
+  try { await muatMonitor(false, true); } catch (e) { }
+  gambarTV();
+}
+function tutupMonitorTV() {
+  window._tvAktif = false;
+  clearInterval(window._tvJeda);
+  if (window._tvEsc) { document.removeEventListener('keydown', window._tvEsc); window._tvEsc = null; }
+  const w = document.getElementById('tvWall'); if (w) w.remove();
+  if (document.fullscreenElement) document.exitFullscreen().catch(() => { });
+}
+function tvDetik() {
+  const off = (MON && MON.offset) || 0;
+  const jam = document.getElementById('tvJam'); if (jam) jam.textContent = new Date(Date.now() + off).toLocaleTimeString('id-ID');
+  document.querySelectorAll('#tvWall [data-end]').forEach(function (el) {
+    const sisa = Math.round((Number(el.dataset.end) - (Date.now() + off)) / 1000);
+    el.textContent = _tvHMS(sisa);
+    el.className = 'tmr ' + (sisa > 1800 ? 'hijau' : sisa > 900 ? 'kuning' : 'merah');
+  });
+}
+function gambarTV() {
+  const grid = document.getElementById('tvGrid'); if (!grid || !MON.d) return;
+  const off = MON.offset || 0, now = Date.now() + off;
+  const R = {};
+  (MON.d.sesi || []).forEach(function (s) {
+    const key = (s.ruang && String(s.ruang).trim()) || '(Tanpa ruang)';
+    const r = R[key] || (R[key] = { nama: key, total: 0, kerja: 0, selesai: 0, kunci: 0, online: 0, dj: 0, soal: 0, endMin: 0 });
+    r.total++;
+    if (s.st === 'In Progress') { r.kerja++; if (s.on) r.online++; const end = now + (s.sisa || 0) * 1000; if (!r.endMin || end < r.endMin) r.endMin = end; }
+    else if (s.st === 'Submitted') r.selesai++;
+    else if (s.st === 'Terminated') r.kunci++;
+    r.dj += (s.dj || 0);
+  });
+  const ruang = Object.keys(R).sort((a, b) => a.localeCompare(b, 'id')).map(k => R[k]);
+  const totOn = ruang.reduce((a, r) => a + r.online, 0), totKn = ruang.reduce((a, r) => a + r.kunci, 0);
+  document.getElementById('tvOn').textContent = totOn; document.getElementById('tvNR').textContent = ruang.length; document.getElementById('tvKn').textContent = totKn;
+  // kolom grid agar muat 1 layar (maks ~20): akar dari jumlah ruang
+  const n = ruang.length, kol = n <= 1 ? 1 : n <= 4 ? 2 : n <= 9 ? 3 : n <= 16 ? 4 : 5;
+  grid.style.gridTemplateColumns = 'repeat(' + kol + ',1fr)';
+  if (!n) { grid.innerHTML = '<div class="tvkosong">Belum ada peserta aktif pada ruang mana pun. Impor penempatan ruang (tab Siswa) dan mulai ujian.</div>'; }
+  else grid.innerHTML = ruang.slice(0, 20).map(function (r) {
+    const prog = r.total ? Math.round((r.selesai / r.total) * 100) : 0;
+    const tmr = r.kerja ? `<div class="tmr" data-end="${r.endMin}">${_tvHMS(Math.round((r.endMin - now) / 1000))}</div>`
+      : `<div class="tmr abu">${r.selesai === r.total ? 'Selesai' : 'Menunggu'}</div>`;
+    return `<div class="rk ${r.kunci ? 'kunci' : ''}"><h3 title="${teks(r.nama)}">${teks(r.nama)}</h3>
+      ${tmr}
+      <div class="bar"><i style="width:${prog}%"></i></div>
+      <div class="baris"><span class="pil">👤 <b>${r.online}</b>/${r.total} online</span><span class="pil">✍️ <b>${r.kerja}</b> kerja</span><span class="pil">✅ <b>${r.selesai}</b> selesai</span>${r.kunci ? `<span class="pil k">🔒 <b>${r.kunci}</b> terkunci</span>` : ''}</div></div>`;
+  }).join('') + (n > 20 ? `<div class="tvkosong" style="grid-column:1/-1">+${n - 20} ruang lagi (ditampilkan 20 teratas)</div>` : '');
+  const kk = (MON.d.kejadian || []).slice(0, 12).map(k => '• ' + jamDetikDari(k.t) + ' ' + teks(k.nama) + ' — ' + teks(k.label)).join('   ');
+  document.getElementById('tvTick').textContent = kk || 'Tidak ada kejadian pelanggaran terbaru.';
+  tvDetik();
+}
+function jamDetikDari(t) { try { return new Date(t).toLocaleTimeString('id-ID'); } catch (e) { return ''; } }
 function jadwalMonitor() {
   clearInterval(MON.hTimer);
   const jeda = MON.d && MON.d.sesi.length > 300 ? 15000 : 10000;
@@ -6358,6 +6561,7 @@ async function muatMonitor(diam, segar) {
     MON.sebelum = {}; d.sesi.forEach(s => MON.sebelum[s.id] = { tot: s.tot, st: s.st });
     MON.d = d;
     gambarMonitor();
+    if (window._tvAktif) gambarTV();
     if (nKunci) { bunyiMonitor(true); kabar('🔒 ' + nKunci + ' peserta baru terkunci karena mencapai batas pelanggaran.'); }
     else if (nPel) bunyiMonitor(false);
   } catch (e) { if (!diam) kabar(e.message); if ($('mnWaktu')) $('mnWaktu').textContent = '⚠ ' + e.message; }
@@ -6649,8 +6853,9 @@ function pdfKecurangan(d) {
 .bk-bar{display:flex;flex-wrap:wrap;gap:8px 12px;align-items:flex-start;justify-content:space-between;margin-bottom:10px}
 .bk-bar h3{margin:0 0 2px}.bk-bar .bk-kanan{display:flex;flex-wrap:wrap;gap:6px;align-items:center}
 .bk-angka{display:grid;grid-template-columns:repeat(auto-fit,minmax(112px,1fr));gap:8px}
-.bk-angka .k{background:#fff;border:1px solid var(--garis);border-radius:12px;padding:8px 11px;cursor:pointer;text-align:left;font:inherit;color:inherit}
-.bk-angka .k b{display:block;font-size:22px;line-height:1.1}.bk-angka .k span{font-size:12px;color:var(--tinta-3);font-weight:700}.bk-angka .k small{display:block;font-size:11px;color:var(--tinta-3)}
+.bk-angka .k{background:#fff;border:1px solid #E8EDF3;border-left:3px solid var(--hijau);border-radius:12px;padding:10px 13px;cursor:pointer;text-align:left;font:inherit;color:inherit;box-shadow:var(--bayang);transition:box-shadow .12s}
+.bk-angka .k:hover{box-shadow:0 3px 12px rgba(16,32,46,.1)}
+.bk-angka .k b{display:block;font-size:23px;font-weight:800;line-height:1.1;color:var(--hijau-tua);letter-spacing:-.02em}.bk-angka .k span{font-size:12px;color:var(--tinta-3);font-weight:700}.bk-angka .k small{display:block;font-size:11px;color:var(--tinta-3)}
 .bk-angka .k.aktif{outline:2px solid var(--hijau);background:#F2FBF6}.bk-angka .k.semua b{color:var(--biru)}
 .bk-saring{display:flex;flex-wrap:wrap;gap:6px;align-items:center;margin:0 0 8px}.bk-saring select,.bk-saring input{width:auto;padding:6px 10px}.bk-saring input[type=search]{min-width:220px}
 .bk-tabel td,.bk-tabel th{font-size:12.8px;padding:7px 8px;vertical-align:top}.bk-tabel td.aksi-bk{white-space:nowrap}.bk-tabel td.aksi-bk .tombol{margin:0 3px 4px 0}
@@ -7670,4 +7875,4 @@ window.bukaTryout = async function () {
 <script>window.__berkasUtuh = true;</script>
 </body>
 </html>
-<!-- AKHIR BERKAS Guru · 821445 -->
+<!-- AKHIR BERKAS Guru · 838621 -->
