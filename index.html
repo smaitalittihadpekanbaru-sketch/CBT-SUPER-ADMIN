@@ -658,6 +658,7 @@ sup.rm-sup,sub.rm-sub{font-size:.72em;line-height:0}
           <button class="tombol netral kecil" id="btnAnalisis" title="Tingkat kesukaran, daya beda, pengecoh, reliabilitas, prediksi soal sulit, bahan pembelajaran, simpan ke bank soal">📊 Analisis butir & prediksi soal sulit</button>
           <button class="tombol netral kecil" id="btnLembar" title="Setiap soal, jawaban siswa (esai lengkap), kunci, dan hasil — cetak/PDF per siswa atau Excel">🧾 Laporan jawaban siswa</button>
           <button class="tombol netral kecil" id="btnKecurangan" title="Indeks risiko per siswa, kemiripan jawaban antarsiswa (PG & esai), jejak pelanggaran">🕵 Analisis kecurangan</button>
+          <button class="tombol netral kecil" id="btnRadar" title="Radar anti-kecurangan LANGSUNG: sinyal jendela berbagi/layar terbagi, pindah tab, tangkapan layar, indeks risiko, + analisis kemiripan. Hanya menandai, tidak mengunci siswa jujur.">🛰 Radar langsung</button>
           <button class="tombol netral kecil" id="btnValidasi" title="Nilai final & benar → tampil di Wali Kelas dan laporan PAS/PTS">✓ Validasi nilai</button>
         </div>
         <div id="pBelum" style="margin-top:10px"></div>
@@ -6272,6 +6273,7 @@ function siapkanRekap531() {
   if ($('btnPsmXlsx')) $('btnPsmXlsx').onclick = () => SEMESTER && unduhSemesterXlsx(SEMESTER, $('psmTp').value || SEMESTER.bawaan.tahun, $('psmSem').value).catch(e => kabar(e.message));
   if ($('btnLembar')) $('btnLembar').onclick = () => tombolProses($('btnLembar'), 'Menyiapkan…', lembarJawaban);
   if ($('btnKecurangan')) $('btnKecurangan').onclick = () => tombolProses($('btnKecurangan'), 'Menganalisis…', analisisKecurangan);
+  if ($('btnRadar')) $('btnRadar').onclick = bukaRadar;
   if ($('btnValidasi')) $('btnValidasi').onclick = () => tombolProses($('btnValidasi'), 'Memproses…', validasiNilai).then(aturTombolValidasi);
   if ($('btnBuatGuru')) $('btnBuatGuru').onclick = () => formAkunGuru(null);
   if ($('btnPinSlip')) $('btnPinSlip').onclick = cetakSlipPin;
@@ -6387,7 +6389,7 @@ function bukaMonitor() {
         <select id="mnTanggal" class="sembunyi" title="Pilih hari ujian"></select>
         ${USER.role === 'Admin' ? '' : '<select id="mnLingkup"><option value="semua">Semua ujian (pengawas)</option><option value="saya">Hanya ujian saya</option></select>'}
         <label><input type="checkbox" id="mnOto" checked> Perbarui otomatis</label><label title="Bunyi saat ada pelanggaran baru / sesi terkunci"><input type="checkbox" id="mnSuara"> 🔔 Bunyi</label>
-        <button class="tombol netral kecil" id="mnMuat">↻ Muat</button><button class="tombol netral kecil" id="mnTV" title="Tampilan command center semua ruang tes dalam 1 layar — untuk TV/proyektor">📺 Mode TV (per ruang)</button><button class="tombol netral kecil" id="mnLayar">⛶ Layar penuh</button>
+        <button class="tombol netral kecil" id="mnMuat">↻ Muat</button><button class="tombol netral kecil" id="mnTV" title="Tampilan command center semua ruang tes dalam 1 layar — untuk TV/proyektor">📺 Mode TV (per ruang)</button><button class="tombol netral kecil" id="mnRadar" title="Radar anti-kecurangan: sinyal risiko langsung + analisis kemiripan jawaban (flag-only)">🛰 Radar kecurangan</button><button class="tombol netral kecil" id="mnLayar">⛶ Layar penuh</button>
         <button class="tombol netral kecil" id="mnXlsx">⬇ Excel</button><button class="tombol netral kecil" id="mnPdf">⬇ PDF</button></div></div>
       <div class="mn-angka" id="mnAngka"></div><div class="mn-ujian" id="mnUjian"></div>
       <div class="mn-dua"><div class="mn-kotak kunci" id="mnKunci"></div><div class="mn-kotak"><h4>⚡ Kejadian terbaru <span class="ket" id="mnFeedN"></span></h4><div class="mn-feed" id="mnFeed"></div></div></div>
@@ -6410,6 +6412,7 @@ function bukaMonitor() {
     $('mnSuara').checked = MON.suara; $('mnSuara').onchange = () => { MON.suara = $('mnSuara').checked; try { localStorage.setItem('mn_suara', MON.suara ? '1' : '0'); } catch (e) { } if (MON.suara) bunyiMonitor(false); };
     $('mnMuat').onclick = () => tombolProses($('mnMuat'), 'Memuat…', () => muatMonitor(false, true));
     $('mnTV').onclick = bukaMonitorTV;
+    $('mnRadar').onclick = bukaRadar;
     $('mnLayar').onclick = () => { const t = $('tMonitor'); if (document.fullscreenElement) document.exitFullscreen(); else if (t.requestFullscreen) t.requestFullscreen().catch(() => { }); };
     $('mnXlsx').onclick = () => excelMonitor().catch(e => kabar(e.message));
     $('mnPdf').onclick = () => pdfMonitor();
@@ -6516,6 +6519,137 @@ function gambarTV() {
   tvDetik();
 }
 function jamDetikDari(t) { try { return new Date(t).toLocaleTimeString('id-ID'); } catch (e) { return ''; } }
+/* ===== RADAR ANTI-KECURANGAN: sinyal risiko LANGSUNG + analisis kemiripan (flag-only, siswa jujur tidak tampil) ===== */
+function bukaRadar() {
+  if (document.getElementById('radarWall')) return;
+  const w = document.createElement('div'); w.id = 'radarWall';
+  w.innerHTML = `<style>
+    #radarWall{position:fixed;inset:0;z-index:9100;background:#0B0F14;color:#E8EEF5;font-family:system-ui,Segoe UI,sans-serif;display:flex;flex-direction:column}
+    #radarWall .rbar{display:flex;align-items:center;gap:16px;padding:12px 20px;background:linear-gradient(90deg,#17122A,#0B0F14);border-bottom:1px solid #2A2140}
+    #radarWall .rbar h2{margin:0;font-size:19px;font-weight:800;letter-spacing:.02em}
+    #radarWall .rbar .jam{font-variant-numeric:tabular-nums;font-size:22px;font-weight:800;color:#C4B5FD;margin-left:auto}
+    #radarWall .rtutup{background:#2A2140;border:1px solid #4A3B6E;color:#E8EEF5;border-radius:8px;padding:8px 14px;font-weight:700;cursor:pointer}
+    #radarWall .rstat{display:flex;gap:12px;flex-wrap:wrap;padding:10px 16px}
+    #radarWall .rstat .s{background:#131A24;border:1px solid #243041;border-radius:10px;padding:6px 14px;text-align:center;min-width:96px}
+    #radarWall .rstat .s b{display:block;font-size:22px;font-weight:800}
+    #radarWall .rstat .s span{font-size:11px;color:#9FB0C3}
+    #radarWall .rstat .s.tinggi b{color:#F87171}#radarWall .rstat .s.hati b{color:#FBBF24}#radarWall .rstat .s.aman b{color:#4ADE80}#radarWall .rstat .s.jendela b{color:#FB923C}
+    #radarWall .rwrap{flex:1;display:flex;overflow:hidden;min-height:0}
+    #radarWall .rlist{flex:1;overflow:auto;padding:4px 16px 10px}
+    #radarWall .rside{width:340px;border-left:1px solid #243041;background:#0E141C;padding:12px 14px;overflow:auto}
+    #radarWall table{width:100%;border-collapse:collapse;font-size:13px}
+    #radarWall th,#radarWall td{padding:7px 9px;border-bottom:1px solid #1B2430;text-align:left;vertical-align:top}
+    #radarWall th{position:sticky;top:0;background:#131A24;color:#9FB0C3;font-size:11px;text-transform:uppercase;letter-spacing:.04em;z-index:1}
+    #radarWall tr.tinggi td{background:rgba(248,113,113,.08)}
+    #radarWall .lv{display:inline-block;padding:2px 9px;border-radius:99px;font-weight:800;font-size:11px}
+    #radarWall .lv.Tinggi{background:#3B1416;color:#FCA5A5;border:1px solid #7F2A2A}
+    #radarWall .lv.Perlu{background:#3A2A0E;color:#FCD34D;border:1px solid #7A5A1E}
+    #radarWall .sig{display:inline-flex;align-items:center;gap:4px;background:#131A24;border:1px solid #243041;border-radius:99px;padding:2px 8px;margin:2px 4px 0 0;font-size:11.5px}
+    #radarWall .sig.jendela{background:#2A1708;border-color:#7A4A1E;color:#FDBA74}
+    #radarWall .sig.ss{background:#2A0E1E;border-color:#7A2A4E;color:#F9A8D4}
+    #radarWall .sig.tab{background:#1A2238;border-color:#2E4270;color:#93C5FD}
+    #radarWall .rkosong{display:grid;place-items:center;height:100%;color:#6B8577;font-size:15px;text-align:center;padding:24px;line-height:1.6}
+    #radarWall .rlegend{font-size:11.5px;color:#7E8EA0;padding:8px 16px;border-top:1px solid #1B2430;background:#0E141C}
+    #radarWall select,#radarWall .rbtn{width:100%;box-sizing:border-box;background:#131A24;border:1px solid #2E3B4E;color:#E8EEF5;border-radius:8px;padding:8px 11px;font-weight:600;cursor:pointer;font-size:13px;margin-bottom:8px}
+    #radarWall .rside h4{margin:2px 0 6px;font-size:13px;color:#C4B5FD}
+    #radarWall .pair{background:#131A24;border:1px solid #243041;border-radius:8px;padding:7px 9px;font-size:12px;margin-bottom:5px}
+  </style>
+  <div class="rbar"><h2>🛰 RADAR ANTI-KECURANGAN <span style="font-size:12px;font-weight:600;color:#86EFAC">● LANGSUNG</span></h2>
+    <span class="jam" id="rdJam">--:--:--</span>
+    <button class="rtutup" id="rdClose">⤫ Keluar (Esc)</button></div>
+  <div class="rstat">
+    <div class="s tinggi"><b id="rdTinggi">0</b><span>Risiko tinggi</span></div>
+    <div class="s hati"><b id="rdHati">0</b><span>Perlu perhatian</span></div>
+    <div class="s jendela"><b id="rdJendela">0</b><span>Sinyal jendela berbagi</span></div>
+    <div class="s"><b id="rdSS">0</b><span>Tangkapan layar</span></div>
+    <div class="s aman"><b id="rdAman">0</b><span>Aman (tak tampil)</span></div>
+  </div>
+  <div class="rwrap">
+    <div class="rlist" id="rdList"></div>
+    <div class="rside">
+      <h4>🔬 Analisis kemiripan jawaban</h4>
+      <select id="rdExam"></select>
+      <button class="rbtn" id="rdRun">Jalankan untuk ujian terpilih</button>
+      <div id="rdMirip" style="color:#7E8EA0;font-size:12px;line-height:1.5">Pilih ujian lalu jalankan. Menandai pasangan dengan jawaban salah sama di luar batas kebetulan (Poisson-binomial). Siswa jujur praktis tidak tertandai.</div>
+    </div>
+  </div>
+  <div class="rlegend">Hanya siswa dengan sinyal risiko yang tampil — <b style="color:#9FB0C3">siswa jujur tanpa pelanggaran tidak muncul di radar.</b> Semua angka adalah <b style="color:#9FB0C3">ukuran untuk ditindaklanjuti pengawas</b> (verifikasi manual), bukan vonis; radar <b style="color:#9FB0C3">tidak mengunci siapa pun secara otomatis</b>.</div>`;
+  document.body.appendChild(w);
+  window._radarAktif = true;
+  document.getElementById('rdClose').onclick = tutupRadar;
+  window._rdEsc = e => { if (e.key === 'Escape') tutupRadar(); };
+  document.addEventListener('keydown', window._rdEsc);
+  document.getElementById('rdRun').onclick = radarKemiripan;
+  try { if (w.requestFullscreen) w.requestFullscreen().catch(() => { }); } catch (e) { }
+  window._rdJeda = setInterval(() => { if (!document.hidden) muatMonitor(true, false).catch(() => { }); }, 10000);
+  window._rdDetik = setInterval(radarDetik, 1000);
+  muatMonitor(false, true).then(gambarRadar).catch(() => { gambarRadar(); });
+}
+function tutupRadar() {
+  window._radarAktif = false;
+  clearInterval(window._rdJeda); clearInterval(window._rdDetik);
+  if (window._rdEsc) { document.removeEventListener('keydown', window._rdEsc); window._rdEsc = null; }
+  const w = document.getElementById('radarWall'); if (w) w.remove();
+  if (document.fullscreenElement) document.exitFullscreen().catch(() => { });
+}
+function radarDetik() {
+  const off = (MON && MON.offset) || 0;
+  const j = document.getElementById('rdJam'); if (j) j.textContent = new Date(Date.now() + off).toLocaleTimeString('id-ID');
+}
+function gambarRadar() {
+  if (!document.getElementById('radarWall') || !MON.d) return;
+  const S = MON.d.sesi || [], U = MON.d.ujian || [];
+  const aktif = S.filter(s => s.st === 'In Progress');
+  const risky = S.filter(s => (s.mt || 0) > 0 || (s.ss || 0) > 0 || (s.tab || 0) > 0 || (s.cp || 0) > 0 || s.lv === 'Tinggi' || s.lv === 'Perlu perhatian')
+    .sort((a, b) => (b.r || 0) - (a.r || 0) || (b.mt || 0) - (a.mt || 0) || (b.tot || 0) - (a.tot || 0));
+  const jml = k => S.reduce((a, s) => a + (Number(s[k]) || 0), 0);
+  document.getElementById('rdTinggi').textContent = S.filter(s => s.lv === 'Tinggi').length;
+  document.getElementById('rdHati').textContent = S.filter(s => s.lv === 'Perlu perhatian').length;
+  document.getElementById('rdJendela').textContent = jml('mt');
+  document.getElementById('rdSS').textContent = jml('ss');
+  document.getElementById('rdAman').textContent = S.filter(s => s.lv === 'Aman').length;
+  const sel = document.getElementById('rdExam');
+  if (sel && sel.dataset.n !== String(U.length)) {
+    sel.dataset.n = String(U.length);
+    sel.innerHTML = U.length ? U.map(u => `<option value="${teks(u.exam_id)}">${teks(u.mapel || u.judul)} · ${teks(u.kelas)}</option>`).join('') : '<option value="">(tidak ada ujian aktif)</option>';
+  }
+  const L = document.getElementById('rdList');
+  if (!risky.length) {
+    L.innerHTML = `<div class="rkosong">✅ Tidak ada sinyal risiko saat ini dari <b>${aktif.length}</b> peserta aktif.<br>
+      <span style="font-size:12px;color:#55707f">Radar memantau: jendela berbagi/layar terbagi, pindah tab/aplikasi, tangkapan layar, menempel, dan indeks risiko. Jalankan juga analisis kemiripan di panel kanan.</span></div>`;
+    return;
+  }
+  L.innerHTML = `<table><thead><tr><th>Risiko</th><th>Siswa</th><th>Ruang / meja</th><th>Sinyal terdeteksi</th><th>Kejadian terakhir</th></tr></thead><tbody>
+    ${risky.map(s => {
+    const sig = [];
+    if ((s.mt || 0) > 0) sig.push(`<span class="sig jendela">🪟 Jendela berbagi / layar terbagi <b>${s.mt}</b></span>`);
+    if ((s.ss || 0) > 0) sig.push(`<span class="sig ss">📸 Tangkapan layar <b>${s.ss}</b></span>`);
+    if ((s.tab || 0) > 0) sig.push(`<span class="sig tab">↔ Keluar tab/aplikasi <b>${s.tab}</b></span>`);
+    if ((s.cp || 0) > 0) sig.push(`<span class="sig">📋 Menempel <b>${s.cp}</b></span>`);
+    const lv = s.lv === 'Tinggi' ? '<span class="lv Tinggi">Tinggi</span>' : s.lv === 'Perlu perhatian' ? '<span class="lv Perlu">Perhatian</span>' : '<span class="ket" style="color:#7E8EA0">' + teks(s.lv || '-') + '</span>';
+    const ak = s.akhir ? teks(jamDetikDari(s.akhir[0]) + ' · ' + s.akhir[1] + (s.akhir[2] ? ' — ' + s.akhir[2] : '')) : '—';
+    return `<tr class="${s.lv === 'Tinggi' ? 'tinggi' : ''}"><td>${lv}<br><span class="ket" style="color:#55707f">skor ${s.r || 0}${s.st !== 'In Progress' ? ' · ' + teks(s.st) : (!s.on ? ' · offline' : '')}</span></td>
+      <td><b>${teks(s.nama)}</b><br><span class="ket" style="color:#7E8EA0">${teks(s.nisn)} · ${teks(s.kelas || '-')}</span></td>
+      <td>${teks(s.ruang || '—')}${s.meja ? '<br><span class="ket" style="color:#7E8EA0">' + teks(s.meja) + '</span>' : ''}</td>
+      <td>${sig.join('') || '—'}</td><td class="ket" style="color:#9FB0C3">${ak}</td></tr>`;
+  }).join('')}</tbody></table>`;
+}
+async function radarKemiripan() {
+  const sel = document.getElementById('rdExam'), out = document.getElementById('rdMirip');
+  if (!sel || !sel.value) { out.innerHTML = '<span style="color:#FBBF24">Tidak ada ujian aktif untuk dianalisis.</span>'; return; }
+  const btn = document.getElementById('rdRun'); if (btn) { btn.disabled = true; btn.textContent = 'Menganalisis…'; }
+  out.innerHTML = 'Menganalisis… (bisa beberapa detik untuk banyak peserta)';
+  try {
+    const d = await api('cbtLaporan', { op: 'kecurangan', exam_id: sel.value }, { coba: 2, batas: 240000 });
+    const m = d.mirip || [];
+    out.innerHTML = `<div style="color:#9FB0C3;margin-bottom:7px"><b style="color:#FCA5A5">${m.length}</b> pasangan jawaban mirip · ${d.miripEsai.length} esai mirip · ${d.ringkas.tinggi} risiko tinggi</div>`
+      + (m.length ? m.slice(0, 15).map(p => `<div class="pair">${teks(p.siswaA.nama)} <span style="color:#7E8EA0">(${teks(p.siswaA.kelas || '-')})</span> ↔ ${teks(p.siswaB.nama)} <span style="color:#7E8EA0">(${teks(p.siswaB.kelas || '-')})</span><br>
+          <span style="color:#7E8EA0"><b style="color:#FCA5A5">${p.salahSama}</b> salah sama (wajarnya ±${p.harapan}) · peluang kebetulan ${teks(p.peluangTeks)} · <b>${teks(p.tingkat)}</b></span></div>`).join('')
+        : '<div style="color:#4ADE80">Tidak ada pasangan yang melampaui batas kebetulan. Siswa jujur aman.</div>')
+      + '<div style="color:#55707f;font-size:11px;margin-top:6px">Untuk rincian lengkap + ekspor, gunakan 🕵 Analisis kecurangan di tab Pemantauan.</div>';
+  } catch (e) { out.innerHTML = '<span style="color:#F87171">' + teks(e.message) + '</span>'; }
+  finally { if (btn) { btn.disabled = false; btn.textContent = 'Jalankan untuk ujian terpilih'; } }
+}
 function jadwalMonitor() {
   clearInterval(MON.hTimer);
   const jeda = MON.d && MON.d.sesi.length > 300 ? 15000 : 10000;
@@ -6542,6 +6676,7 @@ async function muatMonitor(diam, segar) {
     MON.d = d;
     gambarMonitor();
     if (window._tvAktif) gambarTV();
+    if (window._radarAktif) gambarRadar();
     if (nKunci) { bunyiMonitor(true); kabar('🔒 ' + nKunci + ' peserta baru terkunci karena mencapai batas pelanggaran.'); }
     else if (nPel) bunyiMonitor(false);
   } catch (e) { if (!diam) kabar(e.message); if ($('mnWaktu')) $('mnWaktu').textContent = '⚠ ' + e.message; }
@@ -7855,4 +7990,4 @@ window.bukaTryout = async function () {
 <script>window.__berkasUtuh = true;</script>
 </body>
 </html>
-<!-- AKHIR BERKAS Guru · 837199 -->
+<!-- AKHIR BERKAS Guru · 849104 -->
