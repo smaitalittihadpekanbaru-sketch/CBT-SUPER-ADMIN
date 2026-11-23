@@ -5235,6 +5235,7 @@ function gambarJadwalHari() {
       <select id="jfKat">${opsiKat}</select><select id="jfKelas">${opsiKelas}</select>${admin ? `<select id="jfGuru">${opsiGuru}</select>` : ''}
       <span class="ket">${d.length} ujian · ${hari.length} hari</span><span style="flex:1"></span>
       <button class="tombol netral kecil" data-jdl="pdf">⬇ PDF jadwal</button><button class="tombol netral kecil" data-jdl="xlsx">⬇ Excel jadwal</button>
+      ${admin ? '<button class="tombol netral kecil" data-imporjadwal="1" title="Impor banyak jadwal sekaligus dari Excel (.xlsx) atau JSON — kolom fleksibel, durasi otomatis">⬆ Impor Jadwal (Excel/JSON)</button>' : ''}
       ${!JADWAL_F.arsip ? '<button class="tombol netral kecil" data-arsiplewat="1" title="Arsipkan semua jadwal yang waktunya sudah lewat sekaligus">🗄 Arsipkan yang sudah lewat</button>' : ''}
       <label class="ket" style="display:flex;gap:5px;align-items:center;margin:0" title="Jadwal yang diarsipkan disembunyikan dari daftar; datanya tetap tersimpan"><input type="checkbox" id="jfArsip" style="width:auto;margin:0" ${JADWAL_F.arsip ? 'checked' : ''}> 🗄 Arsip${nArsip ? ' (' + nArsip + ')' : ''}</label>
       <label class="ket" style="display:flex;gap:5px;align-items:center;margin:0" title="Token hanya untuk pengawas — jangan dibagikan ke siswa"><input type="checkbox" id="jfToken" style="width:auto;margin:0"> sertakan token</label></div>
@@ -5253,12 +5254,13 @@ function gambarJadwalHari() {
   if ($('btnSesiParalel')) $('btnSesiParalel').onclick = sesiParalel;
 }
 document.addEventListener('click', async function (e) {
-  const b = e.target.closest && e.target.closest('[data-konfirmasi],[data-jsoal],[data-jpantau],[data-arsipjadwal],[data-arsiplewat],[data-ubahwaktu]');
+  const b = e.target.closest && e.target.closest('[data-konfirmasi],[data-jsoal],[data-jpantau],[data-arsipjadwal],[data-arsiplewat],[data-ubahwaktu],[data-imporjadwal]');
   const di = id => $(id) && $(id).contains(b);
   if (!b || !(di('kartuJadwal') || di('pRingkas'))) return;
   if (b.dataset.jsoal) { $('sUjian').value = b.dataset.jsoal; pilihTab('soal'); return; }
   if (b.dataset.jpantau) { $('pUjian').value = b.dataset.jpantau; pilihTab('pantau'); return; }
   if (b.dataset.arsipjadwal) { arsipJadwal(b.dataset.arsipjadwal, b.dataset.v === '1'); return; }
+  if (b.dataset.imporjadwal) { imporJadwalUI(); return; }
   if (b.dataset.arsiplewat) { arsipLewat(); return; }
   if (b.dataset.ubahwaktu) { dialogUbahWaktu(b.dataset.ubahwaktu); return; }
   if (b.dataset.konfirmasi) {
@@ -5301,6 +5303,74 @@ async function arsipLewat() {
   await dialog({ judul: '\ud83d\uddc4 Arsipkan jadwal yang sudah lewat', tombol: 'Arsipkan',
     isi: '<p>Semua jadwal yang waktunya <b>sudah lewat</b> akan disembunyikan dari daftar Jadwal Ujian dan roster. Datanya tetap tersimpan dan dapat ditampilkan lagi kapan saja lewat saringan <b>\ud83d\uddc4 Arsip</b>.</p>',
     kerja: async () => { const d = await api('cbtUjian', { op: 'arsipLewat' }); kabar(d.pesan); await muatUjian(); } });
+}
+/* ---------- impor jadwal massal dari Excel/JSON (kolom fleksibel, pratinjau per-baris) ---------- */
+function _tglSelImpor(v) { const p = n => ('0' + n).slice(-2); return v.getFullYear() + '-' + p(v.getMonth() + 1) + '-' + p(v.getDate()) + ' ' + p(v.getHours()) + ':' + p(v.getMinutes()); }
+function _barisDariSheetJadwal(aoa) {
+  const kunci = /judul|nama|mapel|pelajaran|kategori|jenis|tanggal|tgl|waktu|jam|durasi|menit|lama|kelas|rombel|token|kode/i;
+  const sel = v => (v instanceof Date) ? _tglSelImpor(v) : (v == null ? '' : v);
+  let hi = -1;
+  for (let i = 0; i < Math.min(aoa.length, 15); i++) {
+    const row = (aoa[i] || []).map(v => String(v == null ? '' : v));
+    if (row.filter(v => v.trim()).length >= 2 && row.filter(v => kunci.test(v)).length >= 2) { hi = i; break; }
+  }
+  if (hi < 0) return [];
+  const hdr = (aoa[hi] || []).map(v => String(v == null ? '' : v).trim());
+  const out = [];
+  for (let i = hi + 1; i < aoa.length; i++) {
+    const r = aoa[i]; if (!r || !r.some(v => String(v == null ? '' : v).trim())) continue;
+    const o = {}; hdr.forEach((h, j) => { if (h) o[h] = sel(r[j]); }); out.push(o);
+  }
+  return out;
+}
+async function imporJadwalUI() {
+  const inp = document.createElement('input');
+  inp.type = 'file'; inp.accept = '.xlsx,.xls,.json,application/json';
+  inp.onchange = async () => {
+    const f = inp.files && inp.files[0]; if (!f) return;
+    try {
+      kabar('Membaca berkas…');
+      let daftar;
+      if (/\.json$/i.test(f.name)) {
+        const j = JSON.parse(await f.text());
+        daftar = Array.isArray(j) ? j : (j.jadwal || j.data || j.rows || j.baris || []);
+      } else {
+        await muatPustaka('xlsx', () => !!window.XLSX);
+        const wb = window.XLSX.read(new Uint8Array(await f.arrayBuffer()), { type: 'array', cellDates: true });
+        const sh = wb.Sheets[wb.SheetNames[0]];
+        const aoa = window.XLSX.utils.sheet_to_json(sh, { header: 1, raw: true, defval: '' });
+        daftar = _barisDariSheetJadwal(aoa);
+      }
+      if (!daftar || !daftar.length) { kabar('Tidak ada baris data pada berkas. Pastikan ada baris judul kolom dan data di bawahnya.'); return; }
+      if (daftar.length > 300) { kabar('Maksimal 300 jadwal per impor; berkas berisi ' + daftar.length + ' baris.'); return; }
+      const pv = await api('cbtUjian', { op: 'imporJadwal', pratinjau: true, daftar: daftar }, { coba: 2 });
+      tampilPratinjauJadwal(daftar, pv);
+    } catch (e) { kabar('Gagal membaca berkas: ' + (e && e.message || e)); }
+  };
+  inp.click();
+}
+function tampilPratinjauJadwal(daftar, pv) {
+  const r = pv.ringkas || {};
+  const baris = (pv.baris || []).map(function (b) {
+    const galat = b.status === 'galat';
+    const st = galat ? '✗ ' + teks(b.pesan || 'galat') : (b.status === 'tersimpan' ? '✓ tersimpan' : '✓ siap');
+    return '<tr style="' + (galat ? 'background:#FDECEC' : '') + '"><td style="text-align:center">' + b.baris + '</td><td>' + teks(b.judul || '') + '</td><td>' + teks(b.mapel || '') +
+      '</td><td>' + teks(b.kategori || '') + '</td><td style="white-space:nowrap">' + teks(b.mulai || '') + '</td><td style="text-align:center">' + (b.durasi || '') +
+      '</td><td>' + teks(b.kelas || '') + '</td><td style="white-space:nowrap">' + teks(String(b.token || '')) + '</td><td style="' + (galat ? 'color:var(--salah)' : 'color:var(--hijau)') + '"><b>' + st + '</b></td></tr>';
+  }).join('');
+  const isi = '<p style="margin:0 0 8px">Dari <b>' + (r.total || 0) + '</b> baris: <b style="color:var(--hijau)">' + (r.siap || 0) + ' siap</b>' +
+    (r.galat ? ' · <b style="color:var(--salah)">' + r.galat + ' perlu diperbaiki</b>. Baris ✗ dilewati — perbaiki di berkas lalu ulangi.' : '. Semua baris siap diimpor.') + '</p>' +
+    '<div style="max-height:52vh;overflow:auto;border:1px solid var(--garis);border-radius:8px">' +
+    '<table class="tabel-data" style="width:100%;border-collapse:collapse;font-size:12.5px;min-width:760px"><thead><tr style="background:var(--hijau-tua);color:#fff">' +
+    '<th>#</th><th>Judul</th><th>Mapel</th><th>Kategori</th><th>Mulai</th><th>Menit</th><th>Kelas</th><th>Token</th><th>Status</th></tr></thead><tbody>' + baris + '</tbody></table></div>';
+  dialog({
+    judul: '⬆ Impor Jadwal Ujian — Pratinjau', lebar: true, isi: isi,
+    tombol: r.siap ? ('Impor ' + r.siap + ' jadwal sekarang') : false,
+    kerja: r.siap ? (async () => {
+      const d = await api('cbtUjian', { op: 'imporJadwal', pratinjau: false, daftar: daftar }, { coba: 2, batas: 300000 });
+      kabar(d.pesan); await muatUjian(); return true;
+    }) : undefined
+  });
 }
 /* ---------- form jadwal: guru pengampu & sensitivitas ---------- */
 function gambarPilihPengampu(terpilih) {
@@ -7600,4 +7670,4 @@ window.bukaTryout = async function () {
 <script>window.__berkasUtuh = true;</script>
 </body>
 </html>
-<!-- AKHIR BERKAS Guru · 816575 -->
+<!-- AKHIR BERKAS Guru · 821445 -->
