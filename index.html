@@ -421,6 +421,7 @@ sup.rm-sup,sub.rm-sub{font-size:.72em;line-height:0}
   <div class="peringatan sembunyi" id="pwBawaan">Anda masih memakai password awal. Demi keamanan, ganti password Anda di tab <b>Akun</b>.</div>
   <div class="tabs" id="tabs">
     <button class="aktif" data-t="ujian">Jadwal Ujian</button>
+    <button data-t="buat" id="tabBuat">➕ Buat Jadwal</button>
     <button data-t="soal">Soal</button>
     <button data-t="bank" id="tabBank">📦 Bank Paket Soal</button>
     <button data-t="siswa">Siswa</button>
@@ -450,7 +451,7 @@ sup.rm-sup,sub.rm-sub{font-size:.72em;line-height:0}
         </div>
       </div>
       <div class="kartu blok" id="kartuJadwal"></div>
-      <div class="kartu blok">
+      <div class="kartu blok" id="kartuBuatJadwal">
         <h3 id="fjJudul">Jadwal ujian baru</h3>
         <p class="ket">Kosongkan token agar dibuat acak. Siswa masuk dengan NISN dan token ini di halaman siswa. Soal sudah ada? Pilih dari <a href="#" id="jKeBank">📦 Bank Paket Soal</a> — tidak perlu unggah ulang.</p>
         <div id="jPaketInfo" class="sembunyi"></div>
@@ -511,6 +512,8 @@ sup.rm-sup,sub.rm-sub{font-size:.72em;line-height:0}
         <div class="gulir"><table id="tabelUjian"><thead><tr><th>Ujian</th><th>Jadwal</th><th>Token</th><th>Status</th><th>Pengaturan</th><th>Soal</th><th>Peserta</th><th></th></tr></thead><tbody></tbody></table></div>
       </div>
     </div>
+    <!-- ---- BUAT JADWAL (form pembuatan jadwal baru dipindah ke sini saat init) ---- -->
+    <div id="tBuat" class="sembunyi"></div>
 
     <!-- ---- SOAL ---- -->
     <div id="tSoal" class="sembunyi">
@@ -1098,14 +1101,16 @@ async function bukaDasbor(d) {
     pilihTab('wali');
     return;
   }
-  document.querySelectorAll('#tabs button').forEach(b => { if (['ujian', 'soal', 'bank', 'siswa', 'pantau', 'monitor', 'rekap', 'akun'].indexOf(b.dataset.t) >= 0) b.classList.remove('sembunyi'); });
+  document.querySelectorAll('#tabs button').forEach(b => { if (['ujian', 'buat', 'soal', 'bank', 'siswa', 'pantau', 'monitor', 'rekap', 'akun'].indexOf(b.dataset.t) >= 0) b.classList.remove('sembunyi'); });
   const cek = await api('guruCek');
   $('angkaTunggu').textContent = cek.menunggu; $('angkaTunggu').classList.toggle('sembunyi', !cek.menunggu);
   await muatUjian();
 }
 
 /* ------------------------------ TAB ------------------------------ */
-const TAB = { ujian: 'tUjian', soal: 'tSoal', bank: 'tBank', siswa: 'tSiswa', pantau: 'tPantau', monitor: 'tMonitor', guru: 'tGuru', rekap: 'tRekap', wali: 'tWali', tryout: 'tTryout', akun: 'tAkun' };
+const TAB = { ujian: 'tUjian', buat: 'tBuat', soal: 'tSoal', bank: 'tBank', siswa: 'tSiswa', pantau: 'tPantau', monitor: 'tMonitor', guru: 'tGuru', rekap: 'tRekap', wali: 'tWali', tryout: 'tTryout', akun: 'tAkun' };
+// Pisahkan tempat: "Jadwal Ujian" = daftar jadwal fix (link, jadwal harian, daftar ujian); "Buat Jadwal" = form pembuatan.
+(function () { const b = $('tBuat'), f = $('kartuBuatJadwal'); if (b && f && f.parentNode !== b) b.appendChild(f); })();
 $('tabs').onclick = e => {
   const b = e.target.closest('button'); if (!b) return;
   pilihTab(b.dataset.t);
@@ -1115,6 +1120,7 @@ function pilihTab(t) {
   Object.keys(TAB).forEach(k => $(TAB[k]).classList.toggle('sembunyi', k !== t));
   clearInterval(hPantau);
   if (t === 'ujian') muatUjian().catch(e => kabar(e.message));          // jumlah peserta & status selalu terbaru
+  if (t === 'buat') muatUjian().catch(e => kabar(e.message));           // pastikan pilihan kategori/skema/kelas pada form siap
   if (t === 'soal') muatSoal().catch(e => pesan('sPesan', e.message));
   if (t === 'siswa') muatSiswa().catch(e => pesan('siPesan', e.message));
   if (t === 'pantau') { muatUjian().catch(() => { }).then(() => muatPantau()).catch(e => kabar(e.message)); jadwalPantau(); jadwalRingkas(); }   // daftar ujian ikut diperbarui
@@ -1184,6 +1190,9 @@ function isiPilihUjian() {
     $(id).innerHTML = UJIAN.map(x => `<option value="${x.exam_id}">${teks(x.judul_test)} (${teks(x.access_code)})</option>`).join('') || '<option value="">Belum ada ujian</option>';
     if (lama && UJIAN.some(x => x.exam_id === lama)) $(id).value = lama;
   });
+  // Bila ujian efektif pada tab Soal berpindah (mis. ujian lama terhapus → opsi pertama) sementara tab Soal terbuka,
+  // muat ulang soal+audio agar tidak menampilkan audio/soal ujian lama.
+  if ($('tSoal') && !$('tSoal').classList.contains('sembunyi') && $('sUjian').value && (!UJIAN_SOAL || UJIAN_SOAL.exam_id !== $('sUjian').value)) muatSoal().catch(() => { });
 }
 $('tabelUjian').onclick = e => {
   const b = e.target.closest('button'); if (!b) return;
@@ -1256,7 +1265,7 @@ function isiFormUjian(x) {
   aturSubtes(x.subtes || []); aturFormJadwal531(x);
   $('jPorsi').value = x.porsi_pg === undefined || x.porsi_pg === '' ? 60 : x.porsi_pg; $('jBahasaSert').value = x.bahasa_sert || ''; $('jHasilSiswa').value = x.hasil_siswa || 'sertifikat'; lepasPaketJadwal(); aturPorsiPg();
   $('jKelas').innerHTML = htmlPilihKelas(x.kelas_peserta || []); pasangPilihKelas($('jKelas'));
-  $('fjJudul').textContent = 'Edit: ' + x.judul_test; $('btnBatalEdit').classList.remove('sembunyi'); window.scrollTo(0, 0);
+  $('fjJudul').textContent = 'Edit: ' + x.judul_test; $('btnBatalEdit').classList.remove('sembunyi'); pilihTab('buat'); window.scrollTo(0, 0);
 }
 $('btnBatalEdit').onclick = () => { $('jId').value = ''; $('jToken').value = ''; $('jJudul').value = ''; $('jKkm').value = ''; $('jTampil').value = 'Langsung';
   $('jKirimAwal').value = 'Ya'; $('jBatasViol').value = 6; aturSubtes([]); aturFormJadwal531(null); $('jKelas').innerHTML = htmlPilihKelas([]); pasangPilihKelas($('jKelas'));
@@ -1277,12 +1286,20 @@ $('btnSimpanUjian').onclick = () => tombolProses($('btnSimpanUjian'), 'Menyimpan
     pesan('jPesan', d.pesan, 'info');
     $('btnBatalEdit').click(); pesan('jPesan', d.pesan, 'info');
     await muatUjian();
+    pilihTab('ujian'); kabar('Jadwal tersimpan. Lihat di daftar Jadwal Ujian.');   // kembali ke daftar jadwal fix setelah simpan
   } catch (e) { pesan('jPesan', e.message); }
 });
 
 /* ------------------------------ SOAL ------------------------------ */
 async function muatSoal() {
-  if (!$('sUjian').value) return;
+  AUDIO_G = []; ALUR_G = null; MODE_AUDIO = 'part';     // reset dulu agar audio ujian lama tidak tertinggal saat ganti / buat ujian
+  if (!$('sUjian').value) {                             // tak ada ujian terpilih → kosongkan tampilan audio & soal sepenuhnya
+    UJIAN_SOAL = null; SOAL = [];
+    if ($('daftarAudio')) gambarAudioGuru([]);
+    const tb0 = $('tabelSoal') && $('tabelSoal').querySelector('tbody'); if (tb0) tb0.innerHTML = '<tr><td colspan="10" class="ket">Pilih ujian dulu.</td></tr>';
+    if ($('sJudul')) $('sJudul').textContent = 'Soal';
+    return;
+  }
   const d = await api('cbtSoal', { op: 'daftar', exam_id: $('sUjian').value });
   SOAL = d.soal;
   tampilYatim(d.yatim, d.ujian);
@@ -1995,12 +2012,32 @@ const MIME_TEBAK = { mp3: 'audio/mpeg', m4a: 'audio/mp4', aac: 'audio/aac', wav:
 function bacaBase64(berkas) {
   return new Promise((res, rej) => { const r = new FileReader(); r.onload = () => res(String(r.result).split(',')[1] || ''); r.onerror = () => rej(new Error('Berkas tidak terbaca.')); r.readAsDataURL(berkas); });
 }
+/** Kecilkan gambar di peramban sebelum unggah: upload jauh lebih cepat & tak gampang timeout/rusak.
+ *  Audio & GIF animasi TIDAK disentuh (integritas terjaga). Mengembalikan {b64,mime,nama} atau null (pakai asli). */
+async function kecilkanGambar(berkas) {
+  if (!/^image\//.test(berkas.type || '') || /image\/gif/.test(berkas.type || '')) return null;
+  let u;
+  try {
+    u = URL.createObjectURL(berkas);
+    const img = await new Promise((res, rej) => { const i = new Image(); i.onload = () => res(i); i.onerror = () => rej(new Error('x')); i.src = u; });
+    const maxDim = 1800, sk = Math.min(1, maxDim / img.width, maxDim / img.height);
+    if (sk >= 1 && berkas.size <= 700 * 1024) return null;                       // sudah kecil & tajam → unggah apa adanya
+    const w = Math.max(1, Math.round(img.width * sk)), h = Math.max(1, Math.round(img.height * sk));
+    const c = document.createElement('canvas'); c.width = w; c.height = h;
+    const ctx = c.getContext('2d'); ctx.fillStyle = '#fff'; ctx.fillRect(0, 0, w, h); ctx.drawImage(img, 0, 0, w, h);
+    const b64 = (c.toDataURL('image/jpeg', 0.92).split(',')[1] || '');
+    if (!b64 || b64.length * 0.75 >= berkas.size) return null;                   // tidak lebih kecil → pakai asli (hindari menurunkan mutu sia-sia)
+    return { b64: b64, mime: 'image/jpeg', nama: (berkas.name.replace(/\.[^.]+$/, '') || 'gambar') + '.jpg' };
+  } catch (e) { return null; } finally { if (u) URL.revokeObjectURL(u); }
+}
 /** Unggah satu gambar/audio ke Google Drive sekolah → tautan media. */
 async function unggahMedia(berkas, examId) {
   const mime = berkas.type || MIME_TEBAK[(berkas.name.split('.').pop() || '').toLowerCase()] || '';
   if (!/^(image|audio)\//.test(mime)) throw new Error('Pilih berkas gambar (PNG/JPG/GIF/WEBP) atau audio (MP3/M4A/WAV/OGG).');
   if (berkas.size > 15 * 1024 * 1024) throw new Error('Ukuran ' + (berkas.size / 1048576).toFixed(1) + ' MB melebihi batas 15 MB. Kecilkan dulu (audio: MP3 mono 64 kbps ≈ 0,5 MB per menit).');
-  const d = await api('cbtMedia', { op: 'unggah', exam_id: examId, nama: berkas.name, mime: mime, data: await bacaBase64(berkas) }, { coba: 2, batas: 300000 });
+  const kecil = await kecilkanGambar(berkas);                                    // gambar besar dikecilkan dulu; audio dibiarkan utuh
+  const muatan = kecil || { b64: await bacaBase64(berkas), mime: mime, nama: berkas.name };
+  const d = await api('cbtMedia', { op: 'unggah', exam_id: examId, nama: muatan.nama, mime: muatan.mime, data: muatan.b64 }, { coba: 2, batas: 300000 });
   if (!d.publik) kabar(d.pesan);
   return d.url;
 }
@@ -3090,7 +3127,13 @@ async function bukaMediaSoal(qid) {
     // slot utama (logika audio + pertahankan media lama)
     const berkas = document.getElementById('mmBerkas').files[0];
     let url = document.getElementById('mmTautan').value.trim();
-    if (berkas) { kabar('Mengunggah ' + berkas.name + '…'); url = await unggahMedia(berkas, $('sUjian').value); }
+    if (berkas) {
+      if (/^audio\//.test(berkas.type || '') || /\.(mp3|m4a|wav|ogg|oga|aac)$/i.test(berkas.name)) {   // uji audio dapat diputar (tidak rusak) sebelum diunggah
+        kabar('Menguji audio ' + berkas.name + '…'); await cekAudioLokal(berkas);
+        if (/\.(ogg|oga|webm|weba|flac)$/i.test(berkas.name)) kabar('"' + berkas.name + '": format ini mungkin tak dapat diputar di sebagian iPhone/iPad — sebaiknya MP3.');
+      }
+      kabar('Mengunggah ' + berkas.name + '…'); url = await unggahMedia(berkas, $('sUjian').value);
+    }
     else if (url && document.getElementById('mmAudio').checked && jenisMedia(url) !== 'audio') url = url.replace(/#.*$/, '') + '#audio';
     const pertahankan = document.getElementById('mmPertahankan');
     const sisip = q.media_url && url && pertahankan && pertahankan.checked && jenisMedia(url) !== jenisMedia(q.media_url)
@@ -7156,6 +7199,7 @@ async function jadwalDariPaket(id, sudah) {
   $('btnBatalEdit').classList.remove('sembunyi');
   aturPorsiPg();
   pesan('jPesan', '');
+  pilihTab('buat');                                   // form kini di tab "Buat Jadwal"
   $('fjJudul').scrollIntoView({ block: 'start', behavior: 'smooth' });
   setTimeout(() => $('jMulai').focus({ preventScroll: true }), 300);
 }
@@ -7990,4 +8034,4 @@ window.bukaTryout = async function () {
 <script>window.__berkasUtuh = true;</script>
 </body>
 </html>
-<!-- AKHIR BERKAS Guru · 849104 -->
+<!-- AKHIR BERKAS Guru · 852984 -->
