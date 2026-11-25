@@ -1008,6 +1008,25 @@ let TOKEN = localStorage.getItem('cbt_gtok') || '';
 let USER = null, UJIAN = [], PILIHAN = null, SOAL = [], SISWA = [], PANTAU = null, hPantau = null;
 
 function kabar(t) { const k = document.createElement('div'); k.className = 'kabar'; k.textContent = t; document.body.appendChild(k); setTimeout(() => k.remove(), 3500); }
+/** Tambahkan tombol 👁 "lihat password" di dalam kolom password agar bisa memastikan ketikan benar. */
+function pasangLihatSandi(id) {
+  const inp = document.getElementById(id);
+  if (!inp || inp.dataset.lihat) return;
+  inp.dataset.lihat = '1';
+  const bungkus = document.createElement('div'); bungkus.style.position = 'relative';
+  inp.parentNode.insertBefore(bungkus, inp); bungkus.appendChild(inp);
+  inp.style.paddingRight = '46px';
+  const b = document.createElement('button');
+  b.type = 'button'; b.tabIndex = -1; b.setAttribute('aria-label', 'Lihat atau sembunyikan password'); b.title = 'Lihat password'; b.textContent = '👁';
+  b.style.cssText = 'position:absolute;right:8px;top:50%;transform:translateY(-50%);background:none;border:0;cursor:pointer;font-size:17px;line-height:1;padding:4px;opacity:.6';
+  b.onclick = function () {
+    const buka = inp.type === 'password';
+    inp.type = buka ? 'text' : 'password';
+    b.textContent = buka ? '🙈' : '👁'; b.title = buka ? 'Sembunyikan password' : 'Lihat password'; b.style.opacity = buka ? '1' : '.6';
+    try { inp.focus(); inp.setSelectionRange(inp.value.length, inp.value.length); } catch (e) { }
+  };
+  bungkus.appendChild(b);
+}
 function pesan(id, t, jenis) { const e = $(id); e.className = 'pesan ' + (t ? (jenis || 'galat') : ''); e.textContent = t || ''; }
 
 function panggil(teksReq, batas) {
@@ -1560,9 +1579,60 @@ $('tabelGuru').onclick = async e => {
   if (b.dataset.op === 'edit') return formAkunGuru(GURU_DAFTAR.find(u => u.user_id === b.dataset.id));
   if (b.dataset.op === 'reset' && !await tanya('Reset password?', `<p>Buat password baru untuk <b>${teks(b.dataset.nama)}</b>?</p>`, 'Reset')) return;
   if (b.dataset.op === 'hapus' && !await tanya('Hapus akun?', `<p>Akun <b>${teks(b.dataset.nama)}</b> dihapus dari daftar guru.</p>`, 'Hapus')) return;
-  try { const d = await api('adminGuru', { op: b.dataset.op, user_id: b.dataset.id }); pesan('gPesan', d.pesan, 'info'); await muatGuru(); }
+  try {
+    const target = GURU_DAFTAR.find(u => u.user_id === b.dataset.id) || { nama_lengkap: b.dataset.nama };
+    const d = await api('adminGuru', { op: b.dataset.op, user_id: b.dataset.id });
+    await muatGuru();
+    if (b.dataset.op === 'reset' && d.passwordBaru) dialogHasilReset(target, d.passwordBaru);   // tampilkan password baru + opsi kirim ke guru
+    else pesan('gPesan', d.pesan, 'info');
+  }
   catch (er) { pesan('gPesan', er.message); }
 };
+/** Alamat portal guru (untuk dicantumkan dalam pesan ke guru). */
+function urlPortalGuru() {
+  const dasar = (typeof BOOT !== 'undefined' && BOOT.url) ? BOOT.url : location.href.split('#')[0].split('?')[0];
+  return dasar + (dasar.indexOf('?') >= 0 ? '&' : '?') + 'halaman=guru';
+}
+/** Dialog hasil reset: password baru besar + salin + kirim langsung ke guru (WhatsApp/Email). */
+function dialogHasilReset(u, pw) {
+  const nama = (u && u.nama_lengkap) || 'Bapak/Ibu Guru';
+  const login = (u && (u.email || u.username)) || '';
+  const url = urlPortalGuru();
+  const pesanTeks = `Assalamu'alaikum wr. wb. Yth. ${nama}.\n\nBerikut akun CBT SMAIT Al-Ittihad Anda:\n• Login: ${login}\n• Password baru: ${pw}\n• Masuk di: ${url}\n\nMohon segera ganti password setelah masuk (menu Akun) demi keamanan. Terima kasih.`;
+  dialog({
+    judul: '🔑 Password baru dibuat',
+    tombol: false,
+    isi: `
+      <p style="margin:0 0 10px">Password baru untuk <b>${teks(nama)}</b> berhasil dibuat & login-nya dibuka. Sampaikan secara personal ke guru yang bersangkutan.</p>
+      <div style="display:grid;gap:8px;margin-bottom:12px">
+        <div><span class="ket">Login</span><br><b style="word-break:break-all">${teks(login) || '—'}</b></div>
+        <div><span class="ket">Password baru</span><br>
+          <code id="rsPw" style="font-size:22px;letter-spacing:2px;font-weight:800;background:#F1F5F9;border:1px dashed var(--garis);border-radius:8px;padding:6px 12px;display:inline-block;user-select:all">${teks(pw)}</code>
+          <button type="button" class="tombol netral kecil" id="rsSalinPw">Salin</button></div>
+      </div>
+      <div style="display:flex;gap:8px;flex-wrap:wrap">
+        <button type="button" class="tombol kecil" id="rsWa">📲 Kirim via WhatsApp</button>
+        <a class="tombol netral kecil" id="rsEmail" href="#" style="text-decoration:none">✉ Kirim via Email</a>
+        <button type="button" class="tombol netral kecil" id="rsSalinPesan">Salin pesan lengkap</button>
+      </div>
+      <p class="ket" style="margin:10px 0 0">WhatsApp akan terbuka — pilih kontak guru lalu kirim. Password hanya ditampilkan sekali di sini, jadi salin/kirim sekarang.</p>`,
+    siap: () => {
+      const salin = (t, okPesan) => {
+        const ok = () => kabar(okPesan);
+        if (navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(t).then(ok).catch(cad); else cad();
+        function cad() { const ta = document.createElement('textarea'); ta.value = t; document.body.appendChild(ta); ta.select(); try { document.execCommand('copy'); ok(); } catch (e) { kabar('Salin manual.'); } ta.remove(); }
+      };
+      if ($('rsSalinPw')) $('rsSalinPw').onclick = () => salin(pw, 'Password tersalin.');
+      if ($('rsSalinPesan')) $('rsSalinPesan').onclick = () => salin(pesanTeks, 'Pesan tersalin — tempel ke chat guru.');
+      if ($('rsWa')) $('rsWa').onclick = () => window.open('https://wa.me/?text=' + encodeURIComponent(pesanTeks), '_blank', 'noopener');
+      const em = $('rsEmail');
+      if (em) {
+        if (/@/.test(login)) em.href = 'mailto:' + encodeURIComponent(login) + '?subject=' + encodeURIComponent('Akun CBT SMAIT Al-Ittihad — Password baru') + '&body=' + encodeURIComponent(pesanTeks);
+        else em.classList.add('sembunyi');                 // akun tanpa email (mis. wali kelas) → sembunyikan tombol email
+      }
+    }
+  });
+}
 
 /* --------------------------- REKAP NILAI --------------------------- */
 const BOBOT_REKAP = {
@@ -1681,6 +1751,7 @@ $('btnGantiPw').onclick = () => tombolProses($('btnGantiPw'), 'Menyimpan…', as
 /* ------------------------------ AWAL ------------------------------ */
 (async function () {
   if (BOOT.namaLembaga) $('lencana').textContent = 'CBT ADMIN & GURU · ' + BOOT.namaLembaga;
+  ['mPw', 'dPw', 'aLama', 'aBaru', 'aUlang'].forEach(pasangLihatSandi);   // tombol 👁 lihat password: login, register, dan ganti password
   if ($('tautanPortal')) $('tautanPortal').href = urlPortalSiswa() || BOOT.url || '#';
   gambarLinkPortal();
   if ((BOOT.urlCadangan || []).length) $('linkCadangan').innerHTML = '<b>Bagi peserta per kelompok kelas</b> (lebih dari 300 peserta serentak):<br>Portal 1 (utama): ' + teks(urlPortalSiswa() || BOOT.url) +
@@ -8034,4 +8105,4 @@ window.bukaTryout = async function () {
 <script>window.__berkasUtuh = true;</script>
 </body>
 </html>
-<!-- AKHIR BERKAS Guru · 852984 -->
+<!-- AKHIR BERKAS Guru · 857971 -->
